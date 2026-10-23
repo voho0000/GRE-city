@@ -1,5 +1,7 @@
 # 字城 GRE City
 
+線上版：https://voho0000.github.io/GRE-city/
+
 背一個 GRE 單字，城市就多一棟建築。複習答對，建築就升級成下一種；太久沒複習，建築會褪色、長草。
 
 ## 怎麼玩
@@ -36,3 +38,7 @@ npm run build    # 輸出到 dist/，可直接放上任何靜態網站主機
 ```
 
 技術：React + Vite + TypeScript。城市用 SVG 繪製，資料存在瀏覽器的 IndexedDB，沒有後端。打包後可當 PWA 安裝到手機。內建 383 個 GRE 高頻字當起始字表。
+
+## 部署
+
+推到 `main` 會自動跑測試、打包，並部署到 GitHub Pages（`.github/workflows/deploy.yml`）。第一次使用前，要在 repo 的 Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
