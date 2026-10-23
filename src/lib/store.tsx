@@ -18,6 +18,8 @@ interface Store {
   logs: LogEntry[];
   settings: Settings;
   rate: (id: string, rating: Rating) => Promise<RatingResult>;
+  /** Reverts the most recent rating made on this device; false when there is nothing to undo. */
+  undoLastRating: () => Promise<boolean>;
   importRows: (rows: ParsedRow[]) => Promise<{ added: number; skipped: number }>;
   moveWord: (id: string, district: DistrictId) => Promise<void>;
   removeWord: (id: string) => Promise<void>;
@@ -46,6 +48,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const configRef = useRef(syncState.config);
   configRef.current = syncState.config;
   const syncing = useRef<Promise<void> | null>(null);
+  const undoStack = useRef<{ before: Word; logId: number }[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -145,11 +148,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await db.putWords([next]);
       entry.id = await db.addLog(entry);
       setSnap((s) => (s ? { ...s, logs: [...s.logs, entry] } : s));
+      undoStack.current = [...undoStack.current.slice(-19), { before: word, logId: entry.id }];
       scheduleSync();
       return result;
     },
     [byId, updateWords, scheduleSync],
   );
+
+  const undoLastRating = useCallback(async () => {
+    const last = undoStack.current.pop();
+    if (!last) return false;
+    // Stamp the restored progress as the newest answer so a sync that already uploaded the rating does not
+    // bring it back. (A word that was new has no progress to stamp; that rare case can reappear after a sync.)
+    const restored = last.before.srs ? { ...last.before, srs: { ...last.before.srs, lastAt: Date.now() } } : last.before;
+    updateWords([restored]);
+    await db.putWords([restored]);
+    await db.deleteLog(last.logId);
+    setSnap((s) => (s ? { ...s, logs: s.logs.filter((l) => l.id !== last.logId) } : s));
+    scheduleSync();
+    return true;
+  }, [updateWords, scheduleSync]);
 
   const importRows = useCallback(
     async (rows: ParsedRow[]) => {
@@ -238,6 +256,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     logs: snap?.logs ?? [],
     settings: snap?.settings ?? DEFAULT_SETTINGS,
     rate,
+    undoLastRating,
     importRows,
     moveWord,
     removeWord,

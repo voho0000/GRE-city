@@ -108,6 +108,10 @@ export async function addLog(entry: LogEntry): Promise<number> {
   return (await db()).add('logs', entry);
 }
 
+export async function deleteLog(id: number): Promise<void> {
+  await (await db()).delete('logs', id);
+}
+
 export async function saveSettings(s: Settings): Promise<void> {
   await (await db()).put('meta', s, 'settings');
 }

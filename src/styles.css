@@ -198,7 +198,7 @@ button:disabled { cursor: default; opacity: 0.5; }
   .city, .page { padding: 16px; }
   .city-side { max-width: none; }
   .study { padding: 16px; }
-  .route-study .topbar .nav { display: none; }
+  .route-study .topbar .nav, .route-practice .topbar .nav { display: none; }
 }
 
 @media (hover: none) { .kbd-hint { display: none; } }
@@ -244,3 +244,20 @@ button:disabled { cursor: default; opacity: 0.5; }
 .mini-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .mini-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 10px; border-radius: 10px; background: #F7F9FA; border: 1px solid var(--track); }
 .mini-chip.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+
+.syn { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: #EEF2F8; border: 1px solid #D5DEEA; }
+.btn-primary:disabled { opacity: 0.55; }
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.option { min-height: 64px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.option-word { font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.option.on { border: 2px solid var(--navy); background: #EEF2F8; }
+.option.right { border: 2px solid #2F6B3A; background: #EAF4EC; }
+.option.wrong { border: 2px solid #C0504D; background: var(--warn-bg); }
+.option.dim { opacity: 0.7; }
+
+.exam { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--soft); }
+.exam-days { font-size: 22px; }
+.notice { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink); }
+.notice .btn-text { align-self: flex-start; color: var(--warn-ink); min-height: 32px; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.check input { width: 20px; height: 20px; }

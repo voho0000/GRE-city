@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { CityMap } from '../components/CityMap';
 import { DailyGoal } from '../components/DailyGoal';
+import { ExamPlanCard } from '../components/ExamPlanCard';
 import { StudyOrderPicker } from '../components/StudyOrderPicker';
 import { DISTRICTS, DISTRICT_BY_ID } from '../data/districts';
 import { layoutCity } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
-import { decayOf } from '../lib/srs';
+import { backlogThreshold, decayOf, dueCount, isBacklogged } from '../lib/srs';
 import { useStore } from '../lib/store';
 import { daysBetween } from '../lib/time';
 import type { DistrictId } from '../lib/types';
@@ -92,6 +93,14 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
             <div className="row-between small muted"><span>今日進度</span><span>{done} / {total}</span></div>
             <div className="bar"><div style={{ width: `${total ? (done / total) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
           </div>
+          {isBacklogged(words, now, settings.dailyNew, settings) && (
+            <div className="notice" role="status">
+              <b>先修復，新字暫停</b>
+              <span className="small">有 {dueCount(words, now)} 棟建築等著複習。複習量降到 {backlogThreshold(settings.dailyNew)} 棟以下，新字就會自動恢復。</span>
+              <button type="button" className="btn-text" onClick={() => setSettings({ pauseNewOnBacklog: false })}>照樣加新字</button>
+            </div>
+          )}
+          <ExamPlanCard remaining={remaining} />
           <StudyOrderPicker />
           <a className="btn-primary" href="#/study">{queueSize ? `開始施工 · ${queueSize}` : '今天的工地完工了'}</a>
         </section>

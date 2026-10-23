@@ -119,6 +119,18 @@ export function StatsScreen() {
             </label>
             <button type="button" className="btn-primary" onClick={save}>儲存</button>
           </div>
+          <label className="field">
+            <span className="small muted">翻面前先想幾秒</span>
+            <select value={settings.thinkSeconds} onChange={(e) => setSettings({ thinkSeconds: Number(e.target.value) })}>
+              <option value={0}>不等待</option>
+              <option value={3}>3 秒（建議）</option>
+              <option value={5}>5 秒</option>
+            </select>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={settings.pauseNewOnBacklog} onChange={(e) => setSettings({ pauseNewOnBacklog: e.target.checked })} />
+            <span className="small">複習積太多時暫停新字（先把舊的蓋回來）</span>
+          </label>
         </section>
       </div>
     </main>

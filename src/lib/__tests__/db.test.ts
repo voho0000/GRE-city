@@ -1,12 +1,13 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { addLog, loadAll, putWords, replaceAll } from '../db';
+import { DEFAULT_SETTINGS } from '../types';
 
 describe('db', () => {
   it('seeds the built-in list once, then persists changes', async () => {
     const first = await loadAll();
     expect(first.words.length).toBeGreaterThan(300);
-    expect(first.settings).toEqual({ dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed' as const, focusDistrict: 'speech' as const });
+    expect(first.settings).toEqual(DEFAULT_SETTINGS);
 
     const w = { ...first.words[0], srs: { level: 1, due: 1, lapses: 0, reps: 1, introducedAt: 1, lastAt: 1 } };
     await putWords([w]);
@@ -19,9 +20,9 @@ describe('db', () => {
   });
 
   it('restores a backup in place of everything', async () => {
-    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const }, deleted: {} });
+    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, thinkSeconds: 0, pauseNewOnBacklog: false, examDate: '2027-01-15' }, deleted: {} });
     const snap = await loadAll();
     expect(snap.words).toHaveLength(0);
-    expect(snap.settings).toEqual({ dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const });
+    expect(snap.settings).toEqual({ dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, thinkSeconds: 0, pauseNewOnBacklog: false, examDate: '2027-01-15' });
   });
 });

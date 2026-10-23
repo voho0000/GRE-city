@@ -6,13 +6,15 @@ import { useStore } from './lib/store';
 import { dayKey, startOfDay, streakDays } from './lib/time';
 import { CityScreen } from './screens/CityScreen';
 import { LibraryScreen } from './screens/LibraryScreen';
+import { PracticeScreen } from './screens/PracticeScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { StudyScreen } from './screens/StudyScreen';
 
-type Route = 'city' | 'study' | 'library' | 'stats';
+type Route = 'city' | 'study' | 'practice' | 'library' | 'stats';
 const ROUTES: { id: Route; label: string }[] = [
   { id: 'city', label: '城市' },
   { id: 'study', label: '複習' },
+  { id: 'practice', label: '練習' },
   { id: 'library', label: '字庫' },
   { id: 'stats', label: '統計' },
 ];
@@ -32,7 +34,7 @@ export function App() {
       const r = readRoute();
       setRoute(r);
       // A fresh visit to the study screen starts a fresh queue.
-      if (r === 'study') setStudyKey((k) => k + 1);
+      if (r === 'study' || r === 'practice') setStudyKey((k) => k + 1);
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', on);
@@ -76,6 +78,7 @@ export function App() {
       </header>
       {route === 'city' && <CityScreen queueSize={info.queue} newToday={info.newToday} reviewsDone={info.reviewsToday} />}
       {route === 'study' && <StudyScreen key={studyKey} />}
+      {route === 'practice' && <PracticeScreen key={studyKey} />}
       {route === 'library' && <LibraryScreen />}
       {route === 'stats' && <StatsScreen />}
       <footer className="foot small muted">

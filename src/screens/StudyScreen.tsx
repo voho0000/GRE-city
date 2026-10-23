@@ -6,6 +6,7 @@ import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
 import { canSpeak, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
+import { buildSynonymIndex } from '../lib/synonyms';
 import type { Rating, Word } from '../lib/types';
 
 type Phase = 'front' | 'back' | 'done';
@@ -13,13 +14,17 @@ const REQUEUE_GAP = 5;
 const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
-  const { words, byId, settings, setSettings, rate, syncNow } = useStore();
+  const { words, byId, settings, setSettings, rate, undoLastRating, syncNow } = useStore();
   const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew, settings));
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
   const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean } | null>(null);
   const [session, setSession] = useState({ built: 0, raised: 0, again: 0 });
   const [busy, setBusy] = useState(false);
+  // Screen state before each rating, so a mis-tap can be taken back.
+  const [history, setHistory] = useState<{ pos: number; queue: string[]; session: typeof session }[]>([]);
+  const synonyms = useMemo(() => buildSynonymIndex(words), [words]);
+  const [thinkLeft, setThinkLeft] = useState(settings.thinkSeconds);
 
   const id = queue[pos];
   const word = id ? byId.get(id) : undefined;
@@ -33,6 +38,7 @@ export function StudyScreen() {
   const submit = async (rating: Rating) => {
     if (!word || busy) return;
     setBusy(true);
+    setHistory((h) => [...h.slice(-19), { pos, queue, session }]);
     const r = await rate(word.id, rating);
     let requeued = false;
     if (rating === 'again') {
@@ -59,6 +65,34 @@ export function StudyScreen() {
     setResult(null);
   };
 
+  /** Takes back the last rating and shows that card's answer again, ready to be rated anew. */
+  const undo = async () => {
+    const last = history[history.length - 1];
+    if (!last || busy) return;
+    setBusy(true);
+    if (await undoLastRating()) {
+      setHistory((h) => h.slice(0, -1));
+      setQueue(last.queue);
+      setSession(last.session);
+      setPos(last.pos);
+      setResult(null);
+      setPhase('back');
+    }
+    setBusy(false);
+  };
+
+  // Make the learner try to recall before the answer can be shown.
+  useEffect(() => {
+    if (phase !== 'front') return;
+    setThinkLeft(settings.thinkSeconds);
+    if (!settings.thinkSeconds) return;
+    const t = setInterval(() => setThinkLeft((n) => (n <= 1 ? (clearInterval(t), 0) : n - 1)), 1000);
+    return () => clearInterval(t);
+  }, [phase, pos, settings.thinkSeconds]);
+  const flip = () => {
+    if (thinkLeft <= 0) setPhase('back');
+  };
+
   const addExtra = () => {
     const inQueue = new Set(queue);
     const extra = orderNewWords(words, Date.now(), settings).filter((w) => !inQueue.has(w.id)).slice(0, EXTRA_BATCH).map((w) => w.id);
@@ -75,7 +109,8 @@ export function StudyScreen() {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       if (word && (e.key === 'p' || e.key === 'P')) speak(word.word);
-      else if (phase === 'front' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('back'); }
+      else if ((e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') && history.length && phase !== 'back') { e.preventDefault(); void undo(); }
+      else if (phase === 'front' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); flip(); }
       else if (phase === 'back' && ['1', '2', '3'].includes(e.key)) submit((['again', 'hard', 'good'] as Rating[])[Number(e.key) - 1]);
       else if (phase === 'done' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); next(); }
     };
@@ -95,6 +130,11 @@ export function StudyScreen() {
           <div className="row-between small muted"><span>今日工地</span><span>{progress} / {queue.length}</span></div>
           <div className="bar"><div style={{ width: `${queue.length ? (progress / queue.length) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
         </div>
+        {history.length > 0 && phase !== 'back' && !finished && (
+          <button type="button" className="icon-btn" aria-label="上一步：收回剛才的評分" title="上一步（Z）" disabled={busy} onClick={() => void undo()}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
+          </button>
+        )}
         {canSpeak() && (
           <button type="button" className={`toggle small${settings.autoSpeak ? ' on' : ''}`} aria-pressed={settings.autoSpeak} onClick={() => setSettings({ autoSpeak: !settings.autoSpeak })}>
             自動發音
@@ -106,22 +146,26 @@ export function StudyScreen() {
         <Finished session={session} hasMore={words.some((w) => !w.srs)} onMore={addExtra} />
       ) : word ? (
         phase === 'front' ? (
-          <Front word={word} onFlip={() => setPhase('back')} />
+          <Front word={word} thinkLeft={thinkLeft} onFlip={flip} />
         ) : phase === 'back' ? (
-          <Back word={word} words={words} busy={busy} onRate={submit} />
+          <Back word={word} words={words} synonyms={synonyms.get(word.id) ?? []} byId={byId} busy={busy} onRate={submit} />
         ) : (
-          result && <Done word={word} result={result} onNext={next} />
+          result && <Done word={word} result={result} onNext={next} onUndo={undo} />
         )
       ) : null}
     </main>
   );
 }
 
+/** Front of the card: new or review, and the building at stake, but nothing that hints at the meaning. */
+function StatusChip({ word }: { word: Word }) {
+  return <span className="dchip">{word.srs ? `複習 · ${LEVEL_NAMES[word.srs.level]}` : '新字'}</span>;
+}
+
 function DistrictChip({ word }: { word: Word }) {
   const d = DISTRICT_BY_ID[word.district];
-  const label = word.srs ? LEVEL_NAMES[word.srs.level] : '新字';
   return (
-    <span className="dchip"><span className="dot" style={{ background: d.color }} />{d.name}區 · {label}</span>
+    <span className="dchip"><span className="dot" style={{ background: d.color }} />{d.name}區</span>
   );
 }
 
@@ -142,19 +186,21 @@ function Pronunciation({ word, align = 'center' }: { word: Word; align?: 'center
   );
 }
 
-function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
+function Front({ word, thinkLeft, onFlip }: { word: Word; thinkLeft: number; onFlip: () => void }) {
   const decay = decayOf(word.srs, Date.now());
   return (
     <div className="study-body">
       <div className="card flash center">
-        <DistrictChip word={word} />
+        <StatusChip word={word} />
         <span className="latin word-xl">{word.word}</span>
         <Pronunciation word={word} />
         {word.pos && <span className="muted">{word.pos}</span>}
         {decay === 'weeds' && <span className="small warn-text">這棟已經長草了，答對就能修好</span>}
         <span className="muted small hint">先在心裡說出意思，再翻面<span className="kbd-hint">（空白鍵翻面，P 發音）</span></span>
       </div>
-      <button type="button" className="btn-primary big" onClick={onFlip}>翻面</button>
+      <button type="button" className="btn-primary big" disabled={thinkLeft > 0} onClick={onFlip}>
+        {thinkLeft > 0 ? `先想一想… ${thinkLeft}` : '翻面'}
+      </button>
     </div>
   );
 }
@@ -171,7 +217,7 @@ function Highlighted({ word }: { word: Word }) {
   );
 }
 
-const RATE_LABEL: Record<Rating, string> = { again: '忘了', hard: '模糊', good: '記得' };
+const RATE_LABEL: Record<Rating, string> = { again: '忘了', hard: '看了才想起', good: '想出來了' };
 
 function rateHint(word: Word, rating: Rating): string {
   const r = applyRating(word.srs, rating, Date.now());
@@ -182,7 +228,8 @@ function rateHint(word: Word, rating: Rating): string {
   return r.levelAfter > r.levelBefore ? `蓋到${LEVEL_NAMES[r.levelAfter]}` : '地標巡禮';
 }
 
-function Back({ word, words, busy, onRate }: { word: Word; words: Word[]; busy: boolean; onRate: (r: Rating) => void }) {
+function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words: Word[]; synonyms: string[]; byId: Map<string, Word>; busy: boolean; onRate: (r: Rating) => void }) {
+  const syn = synonyms.map((id) => byId.get(id)).filter((w): w is Word => !!w).slice(0, 6);
   const d = DISTRICT_BY_ID[word.district];
   const neighbors = useMemo(
     () =>
@@ -201,8 +248,15 @@ function Back({ word, words, busy, onRate }: { word: Word; words: Word[]; busy: 
           {word.pos && <span className="muted small">{word.pos}</span>}
         </div>
         <span className="meaning">{word.zh}</span>
+        {syn.length > 0 && (
+          <div className="syn">
+            <span className="small w500">同義字</span>
+            <span className="latin">{syn.map((w) => w.word).join(' · ')}</span>
+            <span className="tiny muted">SE 題常把這幾個字配成一對</span>
+          </div>
+        )}
         <div className="panel stack-6">
-          <span className="small muted w500">{d.name}區 · <span className="latin">{d.root}</span></span>
+          <span className="small muted w500"><DistrictChip word={word} /> <span className="latin">{d.root}</span></span>
           <span className="small">{d.note}</span>
           {neighbors.length > 0 && (
             <span className="small muted">同街鄰居：<span className="latin">{neighbors.map((n) => n.word).join(' · ')}</span></span>
@@ -242,7 +296,7 @@ function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean
   return { title: '加蓋一層！', sub: `${word.word} 從${LEVEL_NAMES[r.levelBefore]}蓋到${LEVEL_NAMES[r.levelAfter]}`, next };
 }
 
-function Done({ word, result, onNext }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean }; onNext: () => void }) {
+function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean }; onNext: () => void; onUndo: () => void }) {
   const copy = doneCopy(word, result.rating, result.r, result.requeued);
   const d = DISTRICT_BY_ID[word.district];
   return (
@@ -256,7 +310,10 @@ function Done({ word, result, onNext }: { word: Word; result: { rating: Rating; 
           <div className="tile left"><span className="small muted">{d.name}區</span><b>{LEVEL_NAMES[result.r.levelAfter]}</b></div>
         </div>
       </div>
-      <button type="button" className="btn-primary big" onClick={onNext} autoFocus>下一個字</button>
+      <div className="row gap-12">
+        <button type="button" className="btn-ghost big" onClick={onUndo}>按錯了，重評</button>
+        <button type="button" className="btn-primary big grow" onClick={onNext} autoFocus>下一個字</button>
+      </div>
     </div>
   );
 }

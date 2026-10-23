@@ -77,6 +77,20 @@ export function newIntroducedToday(words: Word[], now: number): number {
 export interface NewWordOrder {
   studyOrder: StudyOrder;
   focusDistrict: DistrictId;
+  pauseNewOnBacklog?: boolean;
+}
+
+/** With this many reviews due, new words wait: catching up matters more than growing the pile. */
+export function backlogThreshold(dailyNew: number): number {
+  return Math.max(60, dailyNew * 3);
+}
+
+export function dueCount(words: Word[], now: number): number {
+  return words.filter((w) => isDue(w.srs, now)).length;
+}
+
+export function isBacklogged(words: Word[], now: number, dailyNew: number, o: Pick<NewWordOrder, 'pauseNewOnBacklog'>): boolean {
+  return !!o.pauseNewOnBacklog && dueCount(words, now) >= backlogThreshold(dailyNew);
 }
 
 function hashString(s: string): number {
@@ -107,7 +121,8 @@ export function orderNewWords(words: Word[], now: number, o: NewWordOrder): Word
 /** Today's queue: due reviews (most overdue first) interleaved with new words up to the daily limit. */
 export function buildQueue(words: Word[], now: number, dailyNew: number, o: NewWordOrder = { studyOrder: 'mixed', focusDistrict: 'speech' }): string[] {
   const due = words.filter((w) => isDue(w.srs, now)).sort((a, b) => a.srs!.due - b.srs!.due || a.order - b.order);
-  const quota = Math.max(0, dailyNew - newIntroducedToday(words, now));
+  const paused = !!o.pauseNewOnBacklog && due.length >= backlogThreshold(dailyNew);
+  const quota = paused ? 0 : Math.max(0, dailyNew - newIntroducedToday(words, now));
   const fresh = orderNewWords(words, now, o).slice(0, quota);
   const out: string[] = [];
   let i = 0;

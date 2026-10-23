@@ -124,3 +124,19 @@ describe('new word order', () => {
     expect(a).not.toEqual(buildQueue(pool(), NOW, 20));
   });
 });
+
+describe('backlog', () => {
+  it('pauses new words while reviews pile up, unless switched off', () => {
+    const due = Array.from({ length: 150 }, (_, i) => word(`r${i}`, i, srs(1, -1)));
+    const fresh = Array.from({ length: 50 }, (_, i) => word(`n${i}`, 200 + i));
+    const all = [...due, ...fresh];
+    const paused = buildQueue(all, NOW, 50, { studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: true });
+    expect(paused.filter((id) => id.startsWith('n'))).toHaveLength(0);
+    expect(paused).toHaveLength(150);
+    const normal = buildQueue(all, NOW, 50, { studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: false });
+    expect(normal.filter((id) => id.startsWith('n'))).toHaveLength(50);
+    // Below the threshold new words flow as usual.
+    const light = buildQueue([...due.slice(0, 20), ...fresh], NOW, 50, { studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: true });
+    expect(light.filter((id) => id.startsWith('n'))).toHaveLength(50);
+  });
+});
