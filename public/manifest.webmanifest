@@ -1,0 +1,10 @@
+{
+  "name": "字城 GRE City",
+  "short_name": "字城",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EEF2F4",
+  "theme_color": "#1F3A5F",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,45 @@
+export type DistrictId = 'speech' | 'truth' | 'praise' | 'change' | 'caution' | 'pride' | 'plenty' | 'conflict' | 'dock';
+
+export type Rating = 'again' | 'hard' | 'good';
+
+/** Memory state of a learned word. A word with no Srs has no building yet. */
+export interface Srs {
+  /** 0 = foundation … 5 = landmark */
+  level: number;
+  /** Start of the local day (ms) the word is next due. */
+  due: number;
+  lapses: number;
+  reps: number;
+  introducedAt: number;
+  lastAt: number;
+}
+
+export interface Word {
+  /** Lower-cased word, also the dedupe key. */
+  id: string;
+  word: string;
+  zh: string;
+  pos: string;
+  example: string;
+  district: DistrictId;
+  /** Order new words are introduced in. */
+  order: number;
+  source: 'builtin' | 'import';
+  srs: Srs | null;
+}
+
+export interface LogEntry {
+  id?: number;
+  at: number;
+  wordId: string;
+  rating: Rating;
+  isNew: boolean;
+  levelBefore: number;
+  levelAfter: number;
+}
+
+export interface Settings {
+  dailyNew: number;
+}
+
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 50 };
