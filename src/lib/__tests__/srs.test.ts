@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyRating, buildQueue, decayOf, INTERVAL, retryToday } from '../srs';
+import { applyRating, buildQueue, decayOf, INTERVAL } from '../srs';
 import { addDays, daysBetween } from '../time';
 import type { Srs, Word } from '../types';
 
@@ -141,16 +141,13 @@ describe('backlog', () => {
   });
 });
 
-describe('retryToday', () => {
-  it('keeps words whose latest answer today was again', () => {
-    const now = new Date(2026, 9, 23, 18).getTime();
-    const log = (wordId: string, rating: 'again' | 'hard' | 'good', at: number) => ({ wordId, rating, at, isNew: false, levelBefore: 0, levelAfter: 0 });
-    const logs = [
-      log('a', 'again', now - 3600e3),
-      log('b', 'again', now - 3600e3),
-      log('b', 'good', now - 1800e3),
-      log('c', 'again', now - 86400e3),
-    ];
-    expect(retryToday(logs, now)).toEqual(['a']);
+
+describe('lapses', () => {
+  it('counts repeated misses of the same word on one day as a single lapse', () => {
+    const now = new Date(2026, 9, 23, 10).getTime();
+    const first = applyRating(null, 'again', now).srs;
+    const second = applyRating(first, 'again', now + 600e3).srs;
+    expect(second.lapses).toBe(1);
+    expect(applyRating(second, 'again', addDays(now, 1)).srs.lapses).toBe(2);
   });
 });

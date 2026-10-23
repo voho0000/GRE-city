@@ -4,7 +4,8 @@ import { SilentModeTip } from '../components/SilentModeTip';
 import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
-import { applyRating, buildQueue, decayOf, orderNewWords, retryToday, type RatingResult } from '../lib/srs';
+import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
+import { dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../lib/learning';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import { dayKey } from '../lib/time';
@@ -15,24 +16,25 @@ import { thesaurusFor, type Related } from '../lib/thesaurus';
 import type { Rating, Word } from '../lib/types';
 
 type Phase = 'front' | 'back' | 'done';
-const REQUEUE_GAP = 5;
 const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
   const { words, byId, logs, settings, setSettings, rate, undoLastRating, syncNow } = useStore();
   const [queue, setQueue] = useState<string[]>(() => {
-    const q = buildQueue(words, Date.now(), settings.dailyNew, settings);
-    const inQueue = new Set(q);
-    return [...q, ...retryToday(logs, Date.now()).filter((id) => !inQueue.has(id))];
+    // Words still being relearned from earlier today come back first, a few cards apart.
+    const learning = learningIds(dayStates(logs, Date.now()));
+    const q = weaveIn(buildQueue(words, Date.now(), settings.dailyNew, settings), learning);
+    return gateNew(q, 0, new Set(learning), (id) => !byId.get(id)?.srs);
   });
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
-  const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean } | null>(null);
+  const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean; resting: boolean } | null>(null);
   const [session, setSession] = useState({ built: 0, raised: 0, again: 0 });
   const [busy, setBusy] = useState(false);
   // Screen state before each rating, so a mis-tap can be taken back.
   const [history, setHistory] = useState<{ pos: number; queue: string[]; session: typeof session }[]>([]);
   const synonyms = useMemo(() => buildSynonymIndex(words), [words]);
+  const today = useMemo(() => dayStates(logs, Date.now()), [logs]);
 
   const id = queue[pos];
   const word = id ? byId.get(id) : undefined;
@@ -48,12 +50,13 @@ export function StudyScreen() {
     setBusy(true);
     setHistory((h) => [...h.slice(-19), { pos, queue, session }]);
     const r = await rate(word.id, rating);
-    let requeued = false;
-    if (rating === 'again') {
-      requeued = true;
+    const state = step(today.get(word.id), rating, r.isNew);
+    const gap = repeatGap(state);
+    const requeued = gap !== null;
+    if (gap !== null) {
       setQueue((q) => {
         const next = [...q];
-        next.splice(Math.min(pos + 1 + REQUEUE_GAP, next.length), 0, word.id);
+        next.splice(Math.min(pos + 1 + gap, next.length), 0, word.id);
         return next;
       });
     }
@@ -62,12 +65,13 @@ export function StudyScreen() {
       raised: s.raised + (!r.isNew && r.levelAfter > r.levelBefore ? 1 : 0),
       again: s.again + (rating === 'again' ? 1 : 0),
     }));
-    setResult({ rating, r, requeued });
+    setResult({ rating, r, requeued, resting: restingToday(state) });
     setPhase('done');
     setBusy(false);
   };
 
   const next = () => {
+    setQueue((q) => gateNew(q, pos + 1, new Set(learningIds(today)), (id) => !byId.get(id)?.srs));
     setPos((p) => p + 1);
     setPhase('front');
     setResult(null);
@@ -272,7 +276,7 @@ const RATE_LABEL: Record<Rating, string> = { again: '不會', hard: '看了才�
 function rateHint(word: Word, rating: Rating): string {
   const r = applyRating(word.srs, rating, Date.now());
   if (r.isNew) return rating === 'good' ? '蓋小屋' : rating === 'hard' ? '先打地基' : '等等再看';
-  if (rating === 'again') return '拆回地基';
+  if (rating === 'again') return r.levelBefore === 0 ? '等等再看' : '拆回地基';
   if (r.repaired) return '修復';
   if (rating === 'hard') return `維持${LEVEL_NAMES[r.levelAfter]}`;
   return r.levelAfter > r.levelBefore ? `蓋到${LEVEL_NAMES[r.levelAfter]}` : '地標巡禮';
@@ -336,23 +340,24 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
   );
 }
 
-function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean) {
+function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean, resting: boolean) {
   const d = DISTRICT_BY_ID[word.district];
   const next = requeued ? '等一下' : daysLabel(r.days);
+  if (resting) return { title: '今天先休息', sub: `${word.word} 今天卡了 4 次，再硬背效果有限，明天換個腦袋再來`, next };
   if (r.isNew) {
     if (rating === 'good') return { title: '蓋好小屋！', sub: `${word.word} 落腳${d.name}區`, next };
-    if (rating === 'hard') return { title: '地基打好了', sub: '明天回來蓋第一層', next };
+    if (rating === 'hard') return { title: '地基打好了', sub: requeued ? '等一下再考一次，確定記住' : '明天回來蓋第一層', next };
     return { title: '先放地基', sub: '這個字等一下會再出現', next };
   }
-  if (rating === 'again') return { title: '拆回地基', sub: '別擔心，地點還在，等一下再見', next };
+  if (rating === 'again') return { title: r.levelBefore === 0 && !r.isNew ? '再練一次' : '拆回地基', sub: '別擔心，等一下再見，答出來才算過關', next };
   if (r.repaired) return { title: '修好了！', sub: `${word.word} 恢復${LEVEL_NAMES[r.levelAfter]}的樣子`, next };
   if (rating === 'hard') return { title: '地基穩住了', sub: `維持${LEVEL_NAMES[r.levelAfter]}，下次早點回來`, next };
   if (r.levelAfter === r.levelBefore) return { title: '地標巡禮完成', sub: `${word.word} 依然閃亮`, next };
   return { title: '加蓋一層！', sub: `${word.word} 從${LEVEL_NAMES[r.levelBefore]}蓋到${LEVEL_NAMES[r.levelAfter]}`, next };
 }
 
-function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean }; onNext: () => void; onUndo: () => void }) {
-  const copy = doneCopy(word, result.rating, result.r, result.requeued);
+function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean; resting: boolean }; onNext: () => void; onUndo: () => void }) {
+  const copy = doneCopy(word, result.rating, result.r, result.requeued, result.resting);
   const d = DISTRICT_BY_ID[word.district];
   return (
     <div className="study-body">
