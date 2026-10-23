@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { DISTRICTS } from '../data/districts';
+import { DailyLog } from '../components/DailyLog';
 import { LEVEL_NAMES } from '../lib/levels';
 import { decayOf } from '../lib/srs';
 import { useStore } from '../lib/store';
@@ -41,6 +42,7 @@ export function StatsScreen() {
 
   return (
     <main className="page">
+      <DailyLog />
       <div className="tiles4">
         <div className="card tile-lg"><span className="small muted">建築總數</span><span className="num lg">{s.learned}</span></div>
         <div className="card tile-lg"><span className="small muted">地標</span><span className="num lg">{s.levels[5]}</span></div>
