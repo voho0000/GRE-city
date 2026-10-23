@@ -14,3 +14,20 @@ describe('parseParts', () => {
     expect(parseParts('loqu')).toEqual([{ morph: 'loqu', meaning: '' }]);
   });
 });
+
+describe('built-in roots', () => {
+  it('covers most built-in words, every entry well formed', async () => {
+    const { ROOTS } = await import('../../data/roots');
+    const { builtinWords } = await import('../../data/seed');
+    const ids = new Set(builtinWords().map((w) => w.id));
+    const entries = Object.entries(ROOTS);
+    expect(entries.length).toBeGreaterThan(1300);
+    for (const [id, [parts]] of entries) {
+      expect(ids.has(id)).toBe(true);
+      for (const p of parseParts(parts)) {
+        expect(p.morph).not.toBe('');
+        expect(p.meaning).not.toBe('');
+      }
+    }
+  });
+});
