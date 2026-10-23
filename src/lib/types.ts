@@ -53,8 +53,6 @@ export interface Settings {
   /** Which new words come first: the built-in mix of districts, one chosen district, or a daily shuffle. */
   studyOrder: StudyOrder;
   focusDistrict: DistrictId;
-  /** Seconds the front of a card waits before it can be flipped, so the answer is recalled, not recognised. */
-  thinkSeconds: number;
   /** Hold back new words while the review backlog is large. */
   pauseNewOnBacklog: boolean;
   /** GRE date as YYYY-MM-DD, or '' when not set. */
@@ -66,4 +64,4 @@ export const DAILY_MIN = 1;
 export const DAILY_MAX = 500;
 export type StudyOrder = 'mixed' | 'district' | 'random';
 
-export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed', focusDistrict: 'speech', thinkSeconds: 3, pauseNewOnBacklog: true, examDate: '' };
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: true, examDate: '' };

@@ -20,9 +20,9 @@ describe('db', () => {
   });
 
   it('restores a backup in place of everything', async () => {
-    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, thinkSeconds: 0, pauseNewOnBacklog: false, examDate: '2027-01-15' }, deleted: {} });
+    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, pauseNewOnBacklog: false, examDate: '2027-01-15' }, deleted: {} });
     const snap = await loadAll();
     expect(snap.words).toHaveLength(0);
-    expect(snap.settings).toEqual({ dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, thinkSeconds: 0, pauseNewOnBacklog: false, examDate: '2027-01-15' });
+    expect(snap.settings).toEqual({ dailyNew: 35, onboarded: true, autoSpeak: false, studyOrder: 'random' as const, focusDistrict: 'mind' as const, pauseNewOnBacklog: false, examDate: '2027-01-15' });
   });
 });

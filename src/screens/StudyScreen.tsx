@@ -24,7 +24,6 @@ export function StudyScreen() {
   // Screen state before each rating, so a mis-tap can be taken back.
   const [history, setHistory] = useState<{ pos: number; queue: string[]; session: typeof session }[]>([]);
   const synonyms = useMemo(() => buildSynonymIndex(words), [words]);
-  const [thinkLeft, setThinkLeft] = useState(settings.thinkSeconds);
 
   const id = queue[pos];
   const word = id ? byId.get(id) : undefined;
@@ -80,18 +79,7 @@ export function StudyScreen() {
     }
     setBusy(false);
   };
-
-  // Make the learner try to recall before the answer can be shown.
-  useEffect(() => {
-    if (phase !== 'front') return;
-    setThinkLeft(settings.thinkSeconds);
-    if (!settings.thinkSeconds) return;
-    const t = setInterval(() => setThinkLeft((n) => (n <= 1 ? (clearInterval(t), 0) : n - 1)), 1000);
-    return () => clearInterval(t);
-  }, [phase, pos, settings.thinkSeconds]);
-  const flip = () => {
-    if (thinkLeft <= 0) setPhase('back');
-  };
+  const flip = () => setPhase('back');
 
   const addExtra = () => {
     const inQueue = new Set(queue);
@@ -146,7 +134,7 @@ export function StudyScreen() {
         <Finished session={session} hasMore={words.some((w) => !w.srs)} onMore={addExtra} />
       ) : word ? (
         phase === 'front' ? (
-          <Front word={word} thinkLeft={thinkLeft} onFlip={flip} />
+          <Front word={word} onFlip={flip} />
         ) : phase === 'back' ? (
           <Back word={word} words={words} synonyms={synonyms.get(word.id) ?? []} byId={byId} busy={busy} onRate={submit} />
         ) : (
@@ -186,7 +174,7 @@ function Pronunciation({ word, align = 'center' }: { word: Word; align?: 'center
   );
 }
 
-function Front({ word, thinkLeft, onFlip }: { word: Word; thinkLeft: number; onFlip: () => void }) {
+function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
   const decay = decayOf(word.srs, Date.now());
   return (
     <div className="study-body">
@@ -198,9 +186,7 @@ function Front({ word, thinkLeft, onFlip }: { word: Word; thinkLeft: number; onF
         {decay === 'weeds' && <span className="small warn-text">這棟已經長草了，答對就能修好</span>}
         <span className="muted small hint">先在心裡說出意思，再翻面<span className="kbd-hint">（空白鍵翻面，P 發音）</span></span>
       </div>
-      <button type="button" className="btn-primary big" disabled={thinkLeft > 0} onClick={onFlip}>
-        {thinkLeft > 0 ? `先想一想… ${thinkLeft}` : '翻面'}
-      </button>
+      <button type="button" className="btn-primary big" onClick={onFlip}>翻面</button>
     </div>
   );
 }
