@@ -189,13 +189,13 @@ function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
   const decay = decayOf(word.srs, Date.now());
   return (
     <div className="study-body">
-      <div className="card flash center">
+      <div className="card flash center" onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFlip(); }}>
         <StatusChip word={word} />
         <span className="latin word-xl">{word.word}</span>
         <Pronunciation word={word} />
         {word.pos && <span className="muted">{word.pos}</span>}
         {decay === 'weeds' && <span className="small warn-text">這棟已經長草了，答對就能修好</span>}
-        <span className="muted small hint">先在心裡說出意思，再翻面<span className="kbd-hint">（空白鍵翻面，P 發音）</span></span>
+        <span className="muted small hint">先在心裡說出意思，再點卡片翻面<span className="kbd-hint">（空白鍵翻面，P 發音）</span></span>
       </div>
       <button type="button" className="btn-primary big" onClick={onFlip}>翻面</button>
     </div>
