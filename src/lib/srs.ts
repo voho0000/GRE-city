@@ -1,5 +1,5 @@
 import { addDays, dayKey, daysBetween, startOfDay } from './time';
-import type { DistrictId, Rating, Srs, StudyOrder, Word } from './types';
+import type { DistrictId, LogEntry, Rating, Srs, StudyOrder, Word } from './types';
 
 /** Days until the next review once a word reaches each level. */
 export const INTERVAL = [1, 1, 3, 7, 21, 60];
@@ -133,4 +133,15 @@ export function buildQueue(words: Word[], now: number, dailyNew: number, o: NewW
     out.push(takeNew ? fresh[j++].id : due[i++].id);
   }
   return out;
+}
+
+/**
+ * Words whose latest answer today was 不會. Within a visit they come back a few cards later; this keeps them in
+ * today's queue after leaving and returning, since their due date is already tomorrow.
+ */
+export function retryToday(logs: LogEntry[], now: number): string[] {
+  const start = startOfDay(now);
+  const last = new Map<string, Rating>();
+  for (const l of [...logs].sort((a, b) => a.at - b.at)) if (l.at >= start) last.set(l.wordId, l.rating);
+  return [...last].filter(([, r]) => r === 'again').map(([id]) => id);
 }

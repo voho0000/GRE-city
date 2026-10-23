@@ -4,9 +4,10 @@ import { SilentModeTip } from '../components/SilentModeTip';
 import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
-import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
+import { applyRating, buildQueue, decayOf, orderNewWords, retryToday, type RatingResult } from '../lib/srs';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
+import { dayKey } from '../lib/time';
 import { findInSentence } from '../lib/example';
 import { rootsFor } from '../lib/roots';
 import { buildSynonymIndex } from '../lib/synonyms';
@@ -18,8 +19,12 @@ const REQUEUE_GAP = 5;
 const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
-  const { words, byId, settings, setSettings, rate, undoLastRating, syncNow } = useStore();
-  const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew, settings));
+  const { words, byId, logs, settings, setSettings, rate, undoLastRating, syncNow } = useStore();
+  const [queue, setQueue] = useState<string[]>(() => {
+    const q = buildQueue(words, Date.now(), settings.dailyNew, settings);
+    const inQueue = new Set(q);
+    return [...q, ...retryToday(logs, Date.now()).filter((id) => !inQueue.has(id))];
+  });
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
   const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean } | null>(null);
@@ -110,7 +115,13 @@ export function StudyScreen() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const progress = queue.length ? Math.min(pos + (phase === 'done' ? 1 : 0), queue.length) : 0;
+  // Count the whole day, not just this visit: words already answered today stay done after leaving and coming back.
+  const { progress, total } = useMemo(() => {
+    const remaining = new Set(queue.slice(pos + (phase === 'done' ? 1 : 0)));
+    const today = dayKey(Date.now());
+    const done = new Set(logs.filter((l) => dayKey(l.at) === today && !remaining.has(l.wordId)).map((l) => l.wordId));
+    return { progress: done.size, total: done.size + remaining.size };
+  }, [logs, queue, pos, phase]);
 
   return (
     <main className="study">
@@ -119,8 +130,8 @@ export function StudyScreen() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
         </a>
         <div className="grow stack-6">
-          <div className="row-between small muted"><span>今日工地</span><span>{progress} / {queue.length}</span></div>
-          <div className="bar"><div style={{ width: `${queue.length ? (progress / queue.length) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
+          <div className="row-between small muted"><span>今日工地</span><span>{progress} / {total}</span></div>
+          <div className="bar"><div style={{ width: `${total ? (progress / total) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
         </div>
         {history.length > 0 && phase !== 'back' && !finished && (
           <button type="button" className="icon-btn" aria-label="上一步：收回剛才的評分" title="上一步（Z）" disabled={busy} onClick={() => void undo()}>

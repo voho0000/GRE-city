@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyRating, buildQueue, decayOf, INTERVAL } from '../srs';
+import { applyRating, buildQueue, decayOf, INTERVAL, retryToday } from '../srs';
 import { addDays, daysBetween } from '../time';
 import type { Srs, Word } from '../types';
 
@@ -138,5 +138,19 @@ describe('backlog', () => {
     // Below the threshold new words flow as usual.
     const light = buildQueue([...due.slice(0, 20), ...fresh], NOW, 50, { studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: true });
     expect(light.filter((id) => id.startsWith('n'))).toHaveLength(50);
+  });
+});
+
+describe('retryToday', () => {
+  it('keeps words whose latest answer today was again', () => {
+    const now = new Date(2026, 9, 23, 18).getTime();
+    const log = (wordId: string, rating: 'again' | 'hard' | 'good', at: number) => ({ wordId, rating, at, isNew: false, levelBefore: 0, levelAfter: 0 });
+    const logs = [
+      log('a', 'again', now - 3600e3),
+      log('b', 'again', now - 3600e3),
+      log('b', 'good', now - 1800e3),
+      log('c', 'again', now - 86400e3),
+    ];
+    expect(retryToday(logs, now)).toEqual(['a']);
   });
 });
