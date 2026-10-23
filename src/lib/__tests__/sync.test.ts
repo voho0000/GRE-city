@@ -74,7 +74,7 @@ describe('diffLocal', () => {
 
 describe('encode / decode', () => {
   it('round-trips words, progress, logs, settings and deletions', () => {
-    const d = data([word('a', { srs: srs(3, 100), editedAt: 4, kk: 'loˋkweʃəs' }), word('b', { source: 'import', example: 'An example.', kk: 'tɝs' }), word('c')], {
+    const d = data([word('a', { srs: srs(3, 100), editedAt: 4, kk: 'loˋkweʃəs' }), word('b', { source: 'import', example: 'An example.', exampleZh: '一個例子。', kk: 'tɝs' }), word('c')], {
       logs: [{ at: 5, wordId: 'a', rating: 'hard', isNew: true, levelBefore: 0, levelAfter: 0 }],
       deleted: { x: 9 },
       settings: { dailyNew: 35, onboarded: true, autoSpeak: true, studyOrder: 'mixed' as const, focusDistrict: 'speech' as const, voiceSource: 'auto' as const, pauseNewOnBacklog: true, examDate: '', updatedAt: 3 },

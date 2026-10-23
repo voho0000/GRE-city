@@ -179,7 +179,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const id = r.word.toLowerCase();
         if (seen.has(id)) continue;
         seen.add(id);
-        added.push({ id, word: r.word, zh: r.zh, pos: r.pos, ...(r.kk ? { kk: r.kk } : {}), example: r.example, district: r.district, order: order++, source: 'import', srs: null, editedAt: now });
+        added.push({ id, word: r.word, zh: r.zh, pos: r.pos, ...(r.kk ? { kk: r.kk } : {}), example: r.example, ...(r.exampleZh ? { exampleZh: r.exampleZh } : {}), district: r.district, order: order++, source: 'import', srs: null, editedAt: now });
       }
       await db.putWords(added);
       updateWords(added);

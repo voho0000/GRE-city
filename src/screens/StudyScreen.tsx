@@ -6,6 +6,7 @@ import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
+import { findInSentence } from '../lib/example';
 import { buildSynonymIndex } from '../lib/synonyms';
 import type { Rating, Word } from '../lib/types';
 
@@ -192,6 +193,18 @@ function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
   );
 }
 
+function ExampleSentence({ sentence, word }: { sentence: string; word: string }) {
+  const at = findInSentence(sentence, word);
+  if (!at) return <>{sentence}</>;
+  return (
+    <>
+      {sentence.slice(0, at[0])}
+      <b className="ex-word">{sentence.slice(at[0], at[1])}</b>
+      {sentence.slice(at[1])}
+    </>
+  );
+}
+
 function Highlighted({ word }: { word: Word }) {
   const span = rootSpan(word);
   if (!span) return <>{word.word}</>;
@@ -250,9 +263,9 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
           )}
         </div>
         {word.example && (
-          <div className="stack-4">
-            <span className="small muted w500">例句</span>
-            <span className="latin">{word.example}</span>
+          <div className="example">
+            <span className="latin"><ExampleSentence sentence={word.example} word={word.word} /></span>
+            {word.exampleZh && <span className="small muted">{word.exampleZh}</span>}
           </div>
         )}
       </div>

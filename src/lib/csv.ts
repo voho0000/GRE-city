@@ -8,6 +8,7 @@ export interface ParsedRow {
   pos: string;
   kk: string;
   example: string;
+  exampleZh: string;
   district: DistrictId;
 }
 
@@ -42,6 +43,7 @@ const HEADERS: Record<keyof ParsedRow, string[]> = {
   pos: ['pos', 'part', '詞性'],
   kk: ['kk', 'phonetic', '音標', 'kk音標'],
   example: ['example', 'sentence', '例句'],
+  exampleZh: ['example_zh', 'translation', '例句翻譯', '翻譯'],
   district: ['district', 'root', 'theme', '街區', '分區', '主題'],
 };
 
@@ -49,7 +51,7 @@ export function parseWordList(text: string): ParsedRow[] {
   const rows = splitRows(text);
   if (!rows.length) return [];
   const head = rows[0].map((h) => h.toLowerCase());
-  const col: Record<keyof ParsedRow, number> = { word: 0, zh: 1, pos: 2, example: 3, district: 4, kk: -1 };
+  const col: Record<keyof ParsedRow, number> = { word: 0, zh: 1, pos: 2, example: 3, district: 4, kk: -1, exampleZh: -1 };
   const hasHeader = head.some((h) => HEADERS.word.includes(h));
   if (hasHeader) {
     for (const key of Object.keys(HEADERS) as (keyof ParsedRow)[]) col[key] = head.findIndex((h) => HEADERS[key].includes(h));
@@ -66,6 +68,7 @@ export function parseWordList(text: string): ParsedRow[] {
       pos: get('pos'),
       kk: get('kk').replace(/^[[/]|[\]/]$/g, ''),
       example: get('example'),
+      exampleZh: get('exampleZh'),
       district: districtFromLabel(get('district')) ?? suggestDistrict(word, zh),
     });
   }

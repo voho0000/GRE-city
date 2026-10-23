@@ -52,11 +52,11 @@ export async function loadAll(): Promise<Snapshot> {
 }
 
 /** Bumped whenever the built-in list changes, so existing cities pick up the new version once. */
-const BUILTIN_VERSION = 3;
+const BUILTIN_VERSION = 4;
 
 /**
  * Brings a city started on an older built-in list up to date, in place: adds new words (after the ones
- * already queued), fills in KK phonetics, and moves built-in words still sitting in the dock to the district
+ * already queued), fills in KK phonetics and example sentences, and moves built-in words still sitting in the dock to the district
  * the list now gives them. Progress, and anything the learner edited or deleted, is left alone.
  */
 async function upgradeBuiltins(words: Word[], deleted: Record<string, number>): Promise<void> {
@@ -74,6 +74,7 @@ async function upgradeBuiltins(words: Word[], deleted: Record<string, number>): 
     }
     let next = mine;
     if (!mine.kk && b.kk) next = { ...next, kk: b.kk };
+    if (!mine.example && b.example) next = { ...next, example: b.example, exampleZh: b.exampleZh };
     if (mine.source === 'builtin' && !mine.editedAt && mine.district === 'dock' && b.district !== 'dock') next = { ...next, district: b.district };
     if (next !== mine) {
       words[words.indexOf(mine)] = next;

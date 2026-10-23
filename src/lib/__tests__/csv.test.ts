@@ -18,7 +18,7 @@ describe('splitRows', () => {
 describe('parseWordList', () => {
   it('reads headerless rows as word, zh, pos, example', () => {
     const rows = parseWordList('garrulous,喋喋不休的,adj.,He was garrulous.');
-    expect(rows).toEqual([{ word: 'garrulous', zh: '喋喋不休的', pos: 'adj.', kk: '', example: 'He was garrulous.', district: 'speech' }]);
+    expect(rows).toEqual([{ word: 'garrulous', zh: '喋喋不休的', pos: 'adj.', kk: '', example: 'He was garrulous.', exampleZh: '', district: 'speech' }]);
   });
 
   it('maps columns by header, in any order, and honours a district column', () => {

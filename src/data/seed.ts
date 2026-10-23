@@ -1,5 +1,6 @@
 import type { DistrictId, Word } from '../lib/types';
 import { BUILTIN } from './builtin';
+import { EXAMPLES } from './examples';
 
 export function builtinWords(): Word[] {
   const seen = new Set<string>();
@@ -20,7 +21,7 @@ export function builtinWords(): Word[] {
       const row = list[i];
       if (!row || seen.has(row.word.toLowerCase())) continue;
       seen.add(row.word.toLowerCase());
-      out.push({ id: row.word.toLowerCase(), word: row.word, zh: row.zh, pos: row.pos, kk: row.kk || undefined, example: '', district: row.district, order: out.length, source: 'builtin', srs: null });
+      out.push({ id: row.word.toLowerCase(), word: row.word, zh: row.zh, pos: row.pos, kk: row.kk || undefined, example: EXAMPLES[row.word.toLowerCase()]?.[0] ?? '', exampleZh: EXAMPLES[row.word.toLowerCase()]?.[1], district: row.district, order: out.length, source: 'builtin', srs: null });
     }
   }
   return out;

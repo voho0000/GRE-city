@@ -25,6 +25,8 @@ export interface Word {
   /** KK phonetic transcription without brackets, e.g. loˋkweʃəs. */
   kk?: string;
   example: string;
+  /** Chinese translation of the example sentence. */
+  exampleZh?: string;
   district: DistrictId;
   /** Order new words are introduced in. */
   order: number;
