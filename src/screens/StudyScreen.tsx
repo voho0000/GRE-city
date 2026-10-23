@@ -132,18 +132,19 @@ export function StudyScreen() {
   return (
     <main className="study">
       <div className="row gap-12">
-        <a className="icon-btn" href="#/city" aria-label="回到城市">
+        <a className="icon-btn" href="#/city" aria-label="回到城市" title="回到城市">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
         </a>
         <div className="grow stack-6">
-          <div className="row-between small muted"><span>今日工地</span><span>已答 <b className="ink">{tally.answered}</b> / {tally.total}</span></div>
+          <span className="small muted nowrap">今日工地</span>
           <div className="bar stacked" role="img" aria-label={`會了 ${tally.counts.good}，看了才想起 ${tally.counts.hard}，不會 ${tally.counts.again}，還剩 ${tally.left}`}>
             {(['good', 'hard', 'again'] as Rating[]).map((r) => <span key={r} className={`seg seg-${r}`} style={{ width: pct(tally.counts[r]) }} />)}
           </div>
         </div>
         {history.length > 0 && phase !== 'back' && !finished && (
-          <button type="button" className="icon-btn" aria-label="上一步：收回剛才的評分" title="上一步（Z）" disabled={busy} onClick={() => void undo()}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
+          <button type="button" className="toggle small undo-btn" aria-label="收回上一張的評分" title="收回上一張的評分（Z）" disabled={busy} onClick={() => void undo()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
+            收回
           </button>
         )}
         {canPronounce() && (
@@ -156,7 +157,7 @@ export function StudyScreen() {
         <span><i className="seg-good" />會了 <b>{tally.counts.good}</b></span>
         <span><i className="seg-hard" />看了才想起 <b>{tally.counts.hard}</b></span>
         <span><i className="seg-again" />不會 <b>{tally.counts.again}</b></span>
-        <span className="tally-left"><i className="seg-left" />還沒答 <b>{tally.left}</b></span>
+        <span className="tally-left">已答 <b>{tally.answered}</b> / {tally.total}</span>
       </div>
 
       {canPronounce() && <SilentModeTip />}
