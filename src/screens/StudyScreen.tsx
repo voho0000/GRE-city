@@ -4,6 +4,7 @@ import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, type RatingResult } from '../lib/srs';
+import { canSpeak, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import type { Rating, Word } from '../lib/types';
 
@@ -12,7 +13,7 @@ const REQUEUE_GAP = 5;
 const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
-  const { words, byId, settings, rate, syncNow } = useStore();
+  const { words, byId, settings, setSettings, rate, syncNow } = useStore();
   const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew));
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
@@ -64,10 +65,17 @@ export function StudyScreen() {
     setQueue((q) => [...q, ...extra]);
   };
 
+  // Read each new card aloud as it appears, if the learner wants that.
+  const autoSpeak = settings.autoSpeak && canSpeak();
+  useEffect(() => {
+    if (autoSpeak && phase === 'front' && word) speak(word.word);
+  }, [autoSpeak, phase, pos, word?.word]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-      if (phase === 'front' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('back'); }
+      if (word && (e.key === 'p' || e.key === 'P')) speak(word.word);
+      else if (phase === 'front' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); setPhase('back'); }
       else if (phase === 'back' && ['1', '2', '3'].includes(e.key)) submit((['again', 'hard', 'good'] as Rating[])[Number(e.key) - 1]);
       else if (phase === 'done' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); next(); }
     };
@@ -87,6 +95,11 @@ export function StudyScreen() {
           <div className="row-between small muted"><span>今日工地</span><span>{progress} / {queue.length}</span></div>
           <div className="bar"><div style={{ width: `${queue.length ? (progress / queue.length) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
         </div>
+        {canSpeak() && (
+          <button type="button" className={`toggle small${settings.autoSpeak ? ' on' : ''}`} aria-pressed={settings.autoSpeak} onClick={() => setSettings({ autoSpeak: !settings.autoSpeak })}>
+            自動發音
+          </button>
+        )}
       </div>
 
       {finished ? (
@@ -112,6 +125,23 @@ function DistrictChip({ word }: { word: Word }) {
   );
 }
 
+function Pronunciation({ word, align = 'center' }: { word: Word; align?: 'center' | 'start' }) {
+  if (!word.kk && !canSpeak()) return null;
+  return (
+    <span className={`pron ${align}`}>
+      {word.kk && <span className="kk">[{word.kk}]</span>}
+      {canSpeak() && (
+        <button type="button" className="icon-btn speak" aria-label={`唸出 ${word.word}`} title="發音（P）" onClick={() => speak(word.word)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M11 5 6 9H3v6h3l5 4V5z" />
+            <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+          </svg>
+        </button>
+      )}
+    </span>
+  );
+}
+
 function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
   const decay = decayOf(word.srs, Date.now());
   return (
@@ -119,9 +149,10 @@ function Front({ word, onFlip }: { word: Word; onFlip: () => void }) {
       <div className="card flash center">
         <DistrictChip word={word} />
         <span className="latin word-xl">{word.word}</span>
+        <Pronunciation word={word} />
         {word.pos && <span className="muted">{word.pos}</span>}
         {decay === 'weeds' && <span className="small warn-text">這棟已經長草了，答對就能修好</span>}
-        <span className="muted small hint">先在心裡說出意思，再翻面<span className="kbd-hint">（空白鍵）</span></span>
+        <span className="muted small hint">先在心裡說出意思，再翻面<span className="kbd-hint">（空白鍵翻面，P 發音）</span></span>
       </div>
       <button type="button" className="btn-primary big" onClick={onFlip}>翻面</button>
     </div>
@@ -166,6 +197,7 @@ function Back({ word, words, busy, onRate }: { word: Word; words: Word[]; busy: 
       <div className="card flash">
         <div className="stack-4">
           <span className="latin word-lg"><Highlighted word={word} /></span>
+          <Pronunciation word={word} align="start" />
           {word.pos && <span className="muted small">{word.pos}</span>}
         </div>
         <span className="meaning">{word.zh}</span>

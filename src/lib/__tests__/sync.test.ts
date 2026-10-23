@@ -4,7 +4,7 @@ import type { Srs, Word } from '../types';
 
 const srs = (level: number, lastAt: number): Srs => ({ level, due: lastAt + 86400000, lapses: 0, reps: 1, introducedAt: 1, lastAt });
 const word = (id: string, extra: Partial<Word> = {}): Word => ({ id, word: id, zh: '中', pos: 'adj.', example: '', district: 'dock', order: id.charCodeAt(0), source: 'builtin', srs: null, ...extra });
-const data = (words: Word[], extra: Partial<SyncData> = {}): SyncData => ({ words, logs: [], settings: { dailyNew: 50, onboarded: true }, deleted: {}, ...extra });
+const data = (words: Word[], extra: Partial<SyncData> = {}): SyncData => ({ words, logs: [], settings: { dailyNew: 50, onboarded: true, autoSpeak: true }, deleted: {}, ...extra });
 
 describe('mergeData', () => {
   it('keeps progress made on either device', () => {
@@ -48,10 +48,10 @@ describe('mergeData', () => {
   });
 
   it('uses the most recently changed settings', () => {
-    const a = data([], { settings: { dailyNew: 50, onboarded: true, updatedAt: 10 } });
-    const b = data([], { settings: { dailyNew: 20, onboarded: false, updatedAt: 5 } });
-    expect(mergeData(a, b).settings).toMatchObject({ dailyNew: 50, onboarded: true });
-    expect(mergeData(b, a).settings).toMatchObject({ dailyNew: 50, onboarded: true });
+    const a = data([], { settings: { dailyNew: 50, onboarded: true, autoSpeak: true, updatedAt: 10 } });
+    const b = data([], { settings: { dailyNew: 20, onboarded: false, autoSpeak: true, updatedAt: 5 } });
+    expect(mergeData(a, b).settings).toMatchObject({ dailyNew: 50, onboarded: true, autoSpeak: true });
+    expect(mergeData(b, a).settings).toMatchObject({ dailyNew: 50, onboarded: true, autoSpeak: true });
   });
 
   it('is the same whichever side merges first', () => {
@@ -74,10 +74,10 @@ describe('diffLocal', () => {
 
 describe('encode / decode', () => {
   it('round-trips words, progress, logs, settings and deletions', () => {
-    const d = data([word('a', { srs: srs(3, 100), editedAt: 4 }), word('b', { source: 'import', example: 'An example.' })], {
+    const d = data([word('a', { srs: srs(3, 100), editedAt: 4, kk: 'loˋkweʃəs' }), word('b', { source: 'import', example: 'An example.', kk: 'tɝs' }), word('c')], {
       logs: [{ at: 5, wordId: 'a', rating: 'hard', isNew: true, levelBefore: 0, levelAfter: 0 }],
       deleted: { x: 9 },
-      settings: { dailyNew: 35, onboarded: true, updatedAt: 3 },
+      settings: { dailyNew: 35, onboarded: true, autoSpeak: true, updatedAt: 3 },
     });
     expect(decode(encode(d))).toEqual(d);
   });

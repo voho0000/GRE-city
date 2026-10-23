@@ -70,7 +70,7 @@ export function diffLocal(local: SyncData, merged: SyncData) {
 
 /* Compact file format: a few thousand words and tens of thousands of answers stay well under a megabyte or two. */
 
-type WordRow = [string, string, string, string, string, DistrictId, number, 0 | 1, number, (number[] | 0)?];
+type WordRow = [string, string, string, string, string, DistrictId, number, 0 | 1, number, (number[] | 0)?, string?];
 type LogRow = [number, string, number, 0 | 1, number, number];
 
 export const FILE_NAME = 'gre-city.json';
@@ -78,7 +78,8 @@ export const FILE_NAME = 'gre-city.json';
 export function encode(d: SyncData, now = Date.now()): string {
   const words: WordRow[] = d.words.map((w) => {
     const row: WordRow = [w.id, w.word, w.zh, w.pos, w.example, w.district, w.order, w.source === 'import' ? 1 : 0, w.editedAt ?? 0];
-    if (w.srs) row.push([w.srs.level, w.srs.due, w.srs.lapses, w.srs.reps, w.srs.introducedAt, w.srs.lastAt]);
+    if (w.srs || w.kk) row.push(w.srs ? [w.srs.level, w.srs.due, w.srs.lapses, w.srs.reps, w.srs.introducedAt, w.srs.lastAt] : 0);
+    if (w.kk) row.push(w.kk);
     return row;
   });
   const logs: LogRow[] = d.logs.map((l) => [l.at, l.wordId, RATINGS.indexOf(l.rating), l.isNew ? 1 : 0, l.levelBefore, l.levelAfter]);
@@ -88,11 +89,12 @@ export function encode(d: SyncData, now = Date.now()): string {
 export function decode(text: string): SyncData {
   const raw = JSON.parse(text);
   if (raw?.app !== 'gre-city' || raw.v !== 1 || !Array.isArray(raw.words) || !Array.isArray(raw.logs)) throw new Error('not a GRE City sync file');
-  const words: Word[] = (raw.words as WordRow[]).map(([id, word, zh, pos, example, district, order, source, editedAt, s]) => ({
+  const words: Word[] = (raw.words as WordRow[]).map(([id, word, zh, pos, example, district, order, source, editedAt, s, kk]) => ({
     id, word, zh, pos, example, district, order,
     source: source ? 'import' : 'builtin',
     srs: s ? { level: s[0], due: s[1], lapses: s[2], reps: s[3], introducedAt: s[4], lastAt: s[5] } : null,
     ...(editedAt ? { editedAt } : {}),
+    ...(kk ? { kk } : {}),
   }));
   const logs: LogEntry[] = (raw.logs as LogRow[]).map(([at, wordId, r, isNew, levelBefore, levelAfter]) => ({
     at, wordId, rating: RATINGS[r] ?? 'good', isNew: !!isNew, levelBefore, levelAfter,

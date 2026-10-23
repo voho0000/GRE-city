@@ -18,7 +18,7 @@ describe('splitRows', () => {
 describe('parseWordList', () => {
   it('reads headerless rows as word, zh, pos, example', () => {
     const rows = parseWordList('garrulous,喋喋不休的,adj.,He was garrulous.');
-    expect(rows).toEqual([{ word: 'garrulous', zh: '喋喋不休的', pos: 'adj.', example: 'He was garrulous.', district: 'speech' }]);
+    expect(rows).toEqual([{ word: 'garrulous', zh: '喋喋不休的', pos: 'adj.', kk: '', example: 'He was garrulous.', district: 'speech' }]);
   });
 
   it('maps columns by header, in any order, and honours a district column', () => {
@@ -38,5 +38,12 @@ describe('suggestDistrict', () => {
     expect(suggestDistrict('bellicose', '')).toBe('conflict');
     expect(suggestDistrict('blather', '胡說')).toBe('speech');
     expect(suggestDistrict('zephyr', '微風')).toBe('dock');
+  });
+});
+
+describe('kk column', () => {
+  it('reads KK phonetics and strips surrounding brackets or slashes', () => {
+    const rows = parseWordList('word,zh,kk\nloquacious,多話的,[loˋkweʃəs]\nterse,簡短的,/tɝs/\nlaud,讚美,');
+    expect(rows.map((r) => r.kk)).toEqual(['loˋkweʃəs', 'tɝs', '']);
   });
 });

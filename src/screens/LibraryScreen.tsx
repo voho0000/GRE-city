@@ -58,7 +58,7 @@ export function LibraryScreen() {
             <tbody>
               {shown.map((w) => (
                 <tr key={w.id}>
-                  <td className="latin w500">{w.word} <span className="muted small">{w.pos}</span></td>
+                  <td className="latin w500">{w.word} <span className="muted small">{w.pos}</span>{w.kk && <div className="kk small">[{w.kk}]</div>}</td>
                   <td>{w.zh}</td>
                   <td>
                     <select aria-label={`${w.word} 的街區`} value={w.district} onChange={(e) => moveWord(w.id, e.target.value as DistrictId)}>
@@ -110,10 +110,10 @@ function ImportPanel() {
   return (
     <section className="card stack">
       <h2 className="h2">匯入字表</h2>
-      <p className="small muted">貼上 CSV 或從 Excel 複製（Tab 分隔）。欄位：<span className="latin">word, zh, pos, example, district</span>，只有前兩欄必填；沒填街區會依字根和中文自動分區。</p>
+      <p className="small muted">貼上 CSV 或從 Excel 複製（Tab 分隔），第一列寫欄位名稱：<span className="latin">word, zh, pos, kk, example, district</span>，順序不限，只有 word 和 zh 必填；沒填街區會依字根和中文自動分區。</p>
       <label className="field">
         <span className="small muted">字表內容</span>
-        <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'word,zh,pos\nloquacious,多話的,adj.'} />
+        <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'word,zh,pos,kk\nloquacious,多話的,adj.,loˋkweʃəs'} />
       </label>
       <div className="row wrap gap-12">
         <label className="btn-ghost file-btn">

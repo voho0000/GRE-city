@@ -20,6 +20,8 @@ export interface Word {
   word: string;
   zh: string;
   pos: string;
+  /** KK phonetic transcription without brackets, e.g. loˋkweʃəs. */
+  kk?: string;
   example: string;
   district: DistrictId;
   /** Order new words are introduced in. */
@@ -44,9 +46,11 @@ export interface Settings {
   /** New words introduced per day; each person picks their own on first visit. */
   dailyNew: number;
   onboarded: boolean;
+  /** Read the word aloud when a card appears. */
+  autoSpeak: boolean;
   updatedAt?: number;
 }
 
 export const DAILY_MIN = 1;
 export const DAILY_MAX = 500;
-export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false };
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true };

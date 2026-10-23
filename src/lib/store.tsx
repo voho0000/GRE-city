@@ -21,7 +21,7 @@ interface Store {
   importRows: (rows: ParsedRow[]) => Promise<{ added: number; skipped: number }>;
   moveWord: (id: string, district: DistrictId) => Promise<void>;
   removeWord: (id: string) => Promise<void>;
-  setSettings: (s: Omit<Settings, 'updatedAt'>) => Promise<void>;
+  setSettings: (patch: Partial<Omit<Settings, 'updatedAt'>>) => Promise<void>;
   exportBackup: () => db.Snapshot;
   restoreBackup: (snap: db.Snapshot) => Promise<void>;
   sync: SyncState;
@@ -161,7 +161,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const id = r.word.toLowerCase();
         if (seen.has(id)) continue;
         seen.add(id);
-        added.push({ id, word: r.word, zh: r.zh, pos: r.pos, example: r.example, district: r.district, order: order++, source: 'import', srs: null, editedAt: now });
+        added.push({ id, word: r.word, zh: r.zh, pos: r.pos, ...(r.kk ? { kk: r.kk } : {}), example: r.example, district: r.district, order: order++, source: 'import', srs: null, editedAt: now });
       }
       await db.putWords(added);
       updateWords(added);
@@ -194,8 +194,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const setSettings = useCallback(
-    async (s: Omit<Settings, 'updatedAt'>) => {
-      const settings = { ...s, updatedAt: Date.now() };
+    async (patch: Partial<Omit<Settings, 'updatedAt'>>) => {
+      const settings = { ...(snapRef.current?.settings ?? DEFAULT_SETTINGS), ...patch, updatedAt: Date.now() };
       setSnap((x) => (x ? { ...x, settings } : x));
       await db.saveSettings(settings);
       scheduleSync();

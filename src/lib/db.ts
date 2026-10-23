@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { KK } from '../data/kk';
 import { builtinWords } from '../data/seed';
 import { DEFAULT_SETTINGS, type LogEntry, type Settings, type Word } from './types';
 
@@ -38,6 +39,12 @@ export async function loadAll(): Promise<Snapshot> {
     await tx.done;
   }
   const [words, logs, settings, deleted] = await Promise.all([d.getAll('words'), d.getAll('logs'), d.get('meta', 'settings'), d.get('meta', 'deleted')]);
+  // Cities started before KK phonetics existed get them filled in for the built-in words.
+  const missingKK = words.filter((w) => !w.kk && KK[w.id]);
+  if (missingKK.length) {
+    for (const w of missingKK) w.kk = KK[w.id];
+    await putWords(missingKK);
+  }
   return {
     words,
     logs,

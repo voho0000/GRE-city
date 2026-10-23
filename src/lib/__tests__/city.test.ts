@@ -53,4 +53,12 @@ describe('builtinWords', () => {
     expect(new Set(words.map((w) => w.id)).size).toBe(words.length);
     expect(words.every((w) => w.zh && w.district)).toBe(true);
   });
+
+  it('has KK phonetics for every built-in word, each with a stress mark when longer than one syllable', () => {
+    const words = builtinWords();
+    expect(words.filter((w) => !w.kk).map((w) => w.id)).toEqual([]);
+    const vowels = /[aeiouæɑɔəɛɪʊʌɝɚḷṇ]+/g;
+    const multi = words.filter((w) => (w.kk!.match(vowels) ?? []).length > 1 && !w.kk!.includes('ˋ'));
+    expect(multi.map((w) => w.id)).toEqual([]);
+  });
 });
