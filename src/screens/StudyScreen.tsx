@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Building } from '../components/Building';
+import { SilentModeTip } from '../components/SilentModeTip';
 import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
@@ -130,6 +131,8 @@ export function StudyScreen() {
           </button>
         )}
       </div>
+
+      {canPronounce() && <SilentModeTip />}
 
       {finished ? (
         <Finished session={session} hasMore={words.some((w) => !w.srs)} onMore={addExtra} />

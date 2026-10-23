@@ -5,7 +5,7 @@ import { LEVEL_NAMES } from '../lib/levels';
 import { decayOf } from '../lib/srs';
 import { useStore } from '../lib/store';
 import { addDays, dayKey, streakDays } from '../lib/time';
-import type { VoiceSource } from '../lib/speech';
+import { isAppleMobile, type VoiceSource } from '../lib/speech';
 import { DAILY_MAX, DAILY_MIN } from '../lib/types';
 
 export function StatsScreen() {
@@ -128,6 +128,7 @@ export function StatsScreen() {
               <option value="online">線上真人錄音（不受靜音開關影響）</option>
             </select>
           </label>
+          {isAppleMobile() && settings.voiceSource === 'device' && <span className="tiny muted">iPhone 的裝置語音在靜音模式下不會出聲，記得關掉側邊的靜音開關。</span>}
           <label className="check">
             <input type="checkbox" checked={settings.pauseNewOnBacklog} onChange={(e) => setSettings({ pauseNewOnBacklog: e.target.checked })} />
             <span className="small">複習積太多時暫停新字（先把舊的蓋回來）</span>
