@@ -11,5 +11,8 @@ export function findInSentence(sentence: string, word: string): [number, number]
     const m = re.exec(lower);
     if (m) return [m.index, m.index + m[0].length];
   }
-  return null;
+  // Irregular forms (forbear → forbore, abide → abode): fall back to the start of the word.
+  const prefix = w.slice(0, Math.max(4, w.length - 3));
+  const m = new RegExp(`\\b${prefix.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&')}[a-z]*`, 'i').exec(lower);
+  return m ? [m.index, m.index + m[0].length] : null;
 }

@@ -15,6 +15,7 @@ describe('findInSentence', () => {
     expect(pick('The rumors were quickly debunked.', 'debunk')).toBe('debunked');
     expect(pick('Officials tried to pacify the angry crowd; the protesters were pacified.', 'pacify')).toBe('pacify');
     expect(pick('Two candidates were vilified in the press.', 'vilify')).toBe('vilified');
+    expect(pick('Although provoked, the diplomat forbore from responding.', 'forbear')).toBe('forbore');
   });
 
   it('is case-insensitive and returns null when absent', () => {
