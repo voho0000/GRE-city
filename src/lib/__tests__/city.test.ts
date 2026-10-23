@@ -50,7 +50,7 @@ describe('buildingParts', () => {
 describe('builtinWords', () => {
   it('has unique ids and a known district for every word', () => {
     const words = builtinWords();
-    expect(words).toHaveLength(1200);
+    expect(words).toHaveLength(1423);
     expect(new Set(words.map((w) => w.id)).size).toBe(words.length);
     expect(words.every((w) => w.zh && w.district)).toBe(true);
   });

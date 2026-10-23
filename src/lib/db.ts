@@ -52,7 +52,7 @@ export async function loadAll(): Promise<Snapshot> {
 }
 
 /** Bumped whenever the built-in list changes, so existing cities pick up the new version once. */
-const BUILTIN_VERSION = 2;
+const BUILTIN_VERSION = 3;
 
 /**
  * Brings a city started on an older built-in list up to date, in place: adds new words (after the ones

@@ -43,14 +43,14 @@ export function App() {
     const now = Date.now();
     const t0 = startOfDay(now);
     return {
-      queue: buildQueue(words, now, settings.dailyNew).length,
+      queue: buildQueue(words, now, settings.dailyNew, settings).length,
       newToday: newIntroducedToday(words, now),
       reviewsToday: logs.filter((l) => l.at >= t0 && !l.isNew).length,
       built: words.filter((w) => w.srs).length,
       landmarks: words.filter((w) => w.srs?.level === 5).length,
       streak: streakDays(new Set(logs.map((l) => dayKey(l.at))), now),
     };
-  }, [words, logs, settings.dailyNew]);
+  }, [words, logs, settings]);
 
   if (!ready) return <div className="loading">正在打開城門…</div>;
 

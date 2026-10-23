@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CityMap } from '../components/CityMap';
 import { DailyGoal } from '../components/DailyGoal';
+import { StudyOrderPicker } from '../components/StudyOrderPicker';
 import { DISTRICTS, DISTRICT_BY_ID } from '../data/districts';
 import { layoutCity } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
@@ -91,6 +92,7 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
             <div className="row-between small muted"><span>今日進度</span><span>{done} / {total}</span></div>
             <div className="bar"><div style={{ width: `${total ? (done / total) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
           </div>
+          <StudyOrderPicker />
           <a className="btn-primary" href="#/study">{queueSize ? `開始施工 · ${queueSize}` : '今天的工地完工了'}</a>
         </section>
         )}
@@ -160,6 +162,12 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
             <h2 className="h2 lg">{d.name}區</h2>
             <span className="latin muted">{d.root}</span>
             <span className="small muted">· {d.note} · {districtWords.length} 棟</span>
+            <span className="grow" />
+            {settings.studyOrder === 'district' && settings.focusDistrict === district ? (
+              <span className="small muted">新字正從這區開始</span>
+            ) : (
+              <button type="button" className="btn-ghost" onClick={() => setSettings({ studyOrder: 'district', focusDistrict: district })}>從這區開始背</button>
+            )}
           </div>
           {districtWords.length === 0 ? (
             <p className="muted">這區還是空地。開始今日施工，第一棟就會出現在這裡。</p>

@@ -50,9 +50,14 @@ export interface Settings {
   onboarded: boolean;
   /** Read the word aloud when a card appears. */
   autoSpeak: boolean;
+  /** Which new words come first: the built-in mix of districts, one chosen district, or a daily shuffle. */
+  studyOrder: StudyOrder;
+  focusDistrict: DistrictId;
   updatedAt?: number;
 }
 
 export const DAILY_MIN = 1;
 export const DAILY_MAX = 500;
-export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true };
+export type StudyOrder = 'mixed' | 'district' | 'random';
+
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed', focusDistrict: 'speech' };

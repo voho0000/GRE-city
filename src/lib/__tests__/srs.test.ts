@@ -103,3 +103,24 @@ describe('buildQueue', () => {
     expect(q.slice(0, 2).some((id) => id.startsWith('r'))).toBe(true);
   });
 });
+
+describe('new word order', () => {
+  const pool = (): Word[] =>
+    Array.from({ length: 40 }, (_, i) => ({ ...word(`w${i}`, i), district: (i % 4 === 0 ? 'mind' : 'speech') as Word['district'] }));
+
+  it('takes the chosen district first, then the usual mix', () => {
+    const q = buildQueue(pool(), NOW, 15, { studyOrder: 'district', focusDistrict: 'mind' });
+    expect(q.slice(0, 10).every((id) => Number(id.slice(1)) % 4 === 0)).toBe(true);
+    expect(q).toHaveLength(15);
+  });
+
+  it('shuffles randomly but keeps the same order all day', () => {
+    const o = { studyOrder: 'random' as const, focusDistrict: 'speech' as const };
+    const a = buildQueue(pool(), NOW, 20, o);
+    const sameDay = buildQueue(pool(), NOW + 3600000, 20, o);
+    const nextDay = buildQueue(pool(), addDays(NOW, 1), 20, o);
+    expect(sameDay).toEqual(a);
+    expect(nextDay).not.toEqual(a);
+    expect(a).not.toEqual(buildQueue(pool(), NOW, 20));
+  });
+});

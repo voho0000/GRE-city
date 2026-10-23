@@ -3,7 +3,7 @@ import { Building } from '../components/Building';
 import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
-import { applyRating, buildQueue, decayOf, type RatingResult } from '../lib/srs';
+import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
 import { canSpeak, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import type { Rating, Word } from '../lib/types';
@@ -14,7 +14,7 @@ const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
   const { words, byId, settings, setSettings, rate, syncNow } = useStore();
-  const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew));
+  const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew, settings));
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
   const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean } | null>(null);
@@ -61,7 +61,7 @@ export function StudyScreen() {
 
   const addExtra = () => {
     const inQueue = new Set(queue);
-    const extra = words.filter((w) => !w.srs && !inQueue.has(w.id)).sort((a, b) => a.order - b.order).slice(0, EXTRA_BATCH).map((w) => w.id);
+    const extra = orderNewWords(words, Date.now(), settings).filter((w) => !inQueue.has(w.id)).slice(0, EXTRA_BATCH).map((w) => w.id);
     setQueue((q) => [...q, ...extra]);
   };
 

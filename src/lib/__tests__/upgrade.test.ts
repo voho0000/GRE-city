@@ -27,7 +27,7 @@ describe('upgrading a city started on the 382-word list', () => {
 
     const snap = await loadAll();
     const byId = new Map(snap.words.map((w) => [w.id, w]));
-    expect(snap.words).toHaveLength(1199);
+    expect(snap.words).toHaveLength(1422);
     expect(byId.has(gone)).toBe(false);
     expect(byId.get('erudite')).toMatchObject({ district: 'mind', srs: { level: 3, lapses: 1 } });
     expect(byId.get('lucid')).toMatchObject({ district: 'clarity', kk: 'ˋlusɪd' });
@@ -35,12 +35,12 @@ describe('upgrading a city started on the 382-word list', () => {
     expect(new Set(orders).size).toBe(orders.length);
 
     // Running again changes nothing.
-    expect((await loadAll()).words).toHaveLength(1199);
+    expect((await loadAll()).words).toHaveLength(1422);
   });
 });
 
 describe('built-in list', () => {
-  it('spreads the 1200 words evenly over every district', () => {
+  it('spreads the built-in words evenly over every district', () => {
     const counts = new Map(DISTRICTS.map((d) => [d.id, 0]));
     for (const w of builtinWords()) counts.set(w.district, counts.get(w.district)! + 1);
     for (const [, n] of counts) expect(n).toBeGreaterThanOrEqual(70);
