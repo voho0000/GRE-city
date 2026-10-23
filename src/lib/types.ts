@@ -1,4 +1,6 @@
-export type DistrictId = 'speech' | 'truth' | 'praise' | 'change' | 'caution' | 'pride' | 'plenty' | 'conflict' | 'dock';
+export type DistrictId =
+  | 'speech' | 'truth' | 'praise' | 'change' | 'caution' | 'pride' | 'plenty' | 'conflict'
+  | 'mind' | 'clarity' | 'virtue' | 'mood' | 'effort' | 'will' | 'time' | 'dock';
 
 export type Rating = 'again' | 'hard' | 'good';
 

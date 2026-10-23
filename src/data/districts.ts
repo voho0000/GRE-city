@@ -12,7 +12,7 @@ export interface District {
   zh: string[];
 }
 
-/** Order is the 3×3 placement on the island, row by row. */
+/** Order is the placement on the island, row by row in a square grid (4×4 for 16 districts). */
 export const DISTRICTS: District[] = [
   { id: 'speech', name: '言談', root: 'loqu · dict', note: '說話多寡與方式', color: '#D9822B',
     roots: [/loqu/, /locu/, /dict/, /^voc|voci|vok/, /verb/, /lingu/, /orat/, /garrul/, /tacit/, /retic/, /rhetor/],
@@ -38,6 +38,27 @@ export const DISTRICTS: District[] = [
   { id: 'conflict', name: '爭和', root: 'bell · pac', note: '好鬥與安撫', color: '#C2577F',
     roots: [/bell[ie]/, /^pac/, /placa/, /pugna/, /concili/, /mollif/, /appeas/, /trucul/, /rancor/, /irasc/],
     zh: ['戰', '鬥', '爭', '敵', '怒', '安撫', '平息', '和解'] },
+  { id: 'mind', name: '智愚', root: 'sap · cogn', note: '聰明、學識與愚鈍', color: '#5B5FC7',
+    roots: [/sag[ae]/, /sapi/, /erudi/, /cogn/, /gnos/, /perspica/, /obtus/, /pedan/, /fatu/, /^ina/, /^discern/],
+    zh: ['聰明', '睿智', '精明', '博學', '愚', '笨', '無知', '推測', '推論'] },
+  { id: 'clarity', name: '明晦', root: 'luc · obscur', note: '清楚、隱晦與隱密', color: '#1F9BBF',
+    roots: [/luc[iy]/, /lumin/, /obscur/, /ambig/, /equivoc/, /opaq/, /arcan/, /abstrus/, /crypt/, /clandest/, /covert/],
+    zh: ['清楚', '清晰', '明顯', '晦澀', '深奧', '模稜', '難懂', '隱密', '秘密', '困惑'] },
+  { id: 'virtue', name: '善惡', root: 'bene · mal', note: '道德、善意與有害', color: '#9B6A3C',
+    roots: [/^bene/, /malev/, /malic/, /virtu/, /probit/, /nefar/, /culpa/, /pecca/, /pernic/, /noxi/],
+    zh: ['善', '惡', '道德', '正直', '墮落', '罪', '仁慈', '有害', '有益', '虔誠'] },
+  { id: 'mood', name: '情緒', root: 'dol · eu', note: '喜怒哀樂與沉著', color: '#E0705A',
+    roots: [/dole/, /dolor/, /melanch/, /eupho/, /^ela/, /morose/, /jovi/, /jubil/, /ebulli/, /phlegm/],
+    zh: ['快樂', '高興', '歡', '悲', '哀', '憂', '沮喪', '憤怒', '沉著', '熱情', '焦慮'] },
+  { id: 'effort', name: '勤惰', root: 'labor · lang', note: '勤奮、熱忱與懶散', color: '#7A9A2E',
+    roots: [/labor/, /indol/, /assidu/, /dilig/, /letharg/, /torp/, /zeal/, /langu/, /sedul/, /industr/],
+    zh: ['勤', '懶', '倦', '費力', '拖延', '熱忱', '冷漠', '活力', '衰弱'] },
+  { id: 'will', name: '頑順', root: 'obdur · tract', note: '固執、反抗與屈從', color: '#7E5A9B',
+    roots: [/obdur/, /obstin/, /intransig/, /recalcit/, /tractab/, /mallea/, /^pli/, /flex/, /capitul/, /relinqu/],
+    zh: ['固執', '頑固', '順從', '屈服', '放棄', '堅定', '反抗', '妥協', '壓制'] },
+  { id: 'time', name: '新舊', root: 'chron · nov', note: '時間、新舊與預兆', color: '#4F7F8F',
+    roots: [/chron/, /^nov/, /^nasc/, /archa/, /antiq/, /obsol/, /^ante/, /^pre(ced|curs)/, /^post/, /primo/],
+    zh: ['古', '舊', '新', '過時', '初期', '起源', '先驅', '預示', '永久', '延期'] },
   { id: 'dock', name: '散字碼頭', root: '未分區', note: '還沒歸類的字，先停在碼頭', color: '#7D8792', roots: [], zh: [] },
 ];
 

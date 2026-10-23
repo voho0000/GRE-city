@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DISTRICTS } from '../../data/districts';
 import { builtinWords } from '../../data/seed';
 import { buildingParts, layoutCity } from '../city';
 import { addDays } from '../time';
@@ -15,7 +16,7 @@ describe('layoutCity', () => {
     const words = learned(builtinWords(), 40);
     const city = layoutCity(words, NOW);
     expect(city.buildings).toHaveLength(40);
-    expect(city.blocks).toHaveLength(9);
+    expect(city.blocks).toHaveLength(DISTRICTS.length);
   });
 
   it('never puts two buildings on the same tile, even with thousands of words', () => {
@@ -49,7 +50,7 @@ describe('buildingParts', () => {
 describe('builtinWords', () => {
   it('has unique ids and a known district for every word', () => {
     const words = builtinWords();
-    expect(words.length).toBeGreaterThan(300);
+    expect(words).toHaveLength(1200);
     expect(new Set(words.map((w) => w.id)).size).toBe(words.length);
     expect(words.every((w) => w.zh && w.district)).toBe(true);
   });

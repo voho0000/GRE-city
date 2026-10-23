@@ -173,7 +173,7 @@ export interface CityLayout {
 }
 
 /**
- * Lays the island out as a 3×3 grid of square blocks, one per district. Every block grows to fit the
+ * Lays the island out as a square grid of blocks (4×4 for 16 districts), one per district. Every block grows to fit the
  * busiest district so the island stays square; buildings fill a block row by row in the order learned.
  */
 export function layoutCity(words: Word[], now: number): CityLayout {
@@ -183,14 +183,15 @@ export function layoutCity(words: Word[], now: number): CityLayout {
 
   const maxCount = Math.max(0, ...[...byDistrict.values()].map((l) => l.length));
   const size = Math.max(MIN_BLOCK, Math.ceil(Math.sqrt(maxCount)));
+  const cols = Math.ceil(Math.sqrt(DISTRICTS.length));
   const step = size + ROAD;
-  const side = size * 3 + ROAD * 2;
+  const side = size * cols + ROAD * (cols - 1);
 
   const blocks: Block[] = [];
   const buildings: PlacedBuilding[] = [];
   DISTRICTS.forEach((d, i) => {
-    const gx0 = (i % 3) * step;
-    const gy0 = Math.floor(i / 3) * step;
+    const gx0 = (i % cols) * step;
+    const gy0 = Math.floor(i / cols) * step;
     const corners = [iso(gx0, gy0), iso(gx0 + size, gy0), iso(gx0 + size, gy0 + size), iso(gx0, gy0 + size)];
     const list = byDistrict.get(d.id)!;
     blocks.push({
@@ -227,7 +228,7 @@ export function layoutCity(words: Word[], now: number): CityLayout {
   const L = iso(-m, side + m);
   const E = 16;
   let roads = '';
-  for (let r = 1; r < 3; r++) {
+  for (let r = 1; r < cols; r++) {
     const v = r * step - ROAD / 2;
     const a = iso(v, -m);
     const b = iso(v, side + m);

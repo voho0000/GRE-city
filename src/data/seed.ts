@@ -1,6 +1,5 @@
 import type { DistrictId, Word } from '../lib/types';
 import { BUILTIN } from './builtin';
-import { KK } from './kk';
 
 export function builtinWords(): Word[] {
   const seen = new Set<string>();
@@ -11,8 +10,8 @@ export function builtinWords(): Word[] {
       .trim()
       .split('\n')
       .map((line) => {
-        const [word, zh, pos] = line.split('|');
-        return { word: word.trim(), zh: (zh ?? '').trim(), pos: (pos ?? '').trim(), district };
+        const [word, zh, pos, kk] = line.split('|');
+        return { word: word.trim(), zh: (zh ?? '').trim(), pos: (pos ?? '').trim(), kk: (kk ?? '').trim(), district };
       }),
   );
   const longest = Math.max(...lists.map((l) => l.length));
@@ -21,7 +20,7 @@ export function builtinWords(): Word[] {
       const row = list[i];
       if (!row || seen.has(row.word.toLowerCase())) continue;
       seen.add(row.word.toLowerCase());
-      out.push({ id: row.word.toLowerCase(), word: row.word, zh: row.zh, pos: row.pos, kk: KK[row.word.toLowerCase()], example: '', district: row.district, order: out.length, source: 'builtin', srs: null });
+      out.push({ id: row.word.toLowerCase(), word: row.word, zh: row.zh, pos: row.pos, kk: row.kk || undefined, example: '', district: row.district, order: out.length, source: 'builtin', srs: null });
     }
   }
   return out;

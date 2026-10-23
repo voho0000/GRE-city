@@ -1,5 +1,4 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import { KK } from '../data/kk';
 import { builtinWords } from '../data/seed';
 import { DEFAULT_SETTINGS, type LogEntry, type Settings, type Word } from './types';
 
@@ -36,14 +35,13 @@ export async function loadAll(): Promise<Snapshot> {
     const tx = d.transaction(['words', 'meta'], 'readwrite');
     for (const w of builtinWords()) await tx.objectStore('words').put(w);
     await tx.objectStore('meta').put(true, 'seeded');
+    await tx.objectStore('meta').put(BUILTIN_VERSION, 'builtinVersion');
     await tx.done;
   }
   const [words, logs, settings, deleted] = await Promise.all([d.getAll('words'), d.getAll('logs'), d.get('meta', 'settings'), d.get('meta', 'deleted')]);
-  // Cities started before KK phonetics existed get them filled in for the built-in words.
-  const missingKK = words.filter((w) => !w.kk && KK[w.id]);
-  if (missingKK.length) {
-    for (const w of missingKK) w.kk = KK[w.id];
-    await putWords(missingKK);
+  if (((await d.get('meta', 'builtinVersion')) as number | undefined ?? 1) < BUILTIN_VERSION) {
+    await upgradeBuiltins(words, (deleted as Record<string, number> | undefined) ?? {});
+    await d.put('meta', BUILTIN_VERSION, 'builtinVersion');
   }
   return {
     words,
@@ -51,6 +49,38 @@ export async function loadAll(): Promise<Snapshot> {
     settings: { ...DEFAULT_SETTINGS, ...(settings as Partial<Settings> | undefined) },
     deleted: (deleted as Record<string, number> | undefined) ?? {},
   };
+}
+
+/** Bumped whenever the built-in list changes, so existing cities pick up the new version once. */
+const BUILTIN_VERSION = 2;
+
+/**
+ * Brings a city started on an older built-in list up to date, in place: adds new words (after the ones
+ * already queued), fills in KK phonetics, and moves built-in words still sitting in the dock to the district
+ * the list now gives them. Progress, and anything the learner edited or deleted, is left alone.
+ */
+async function upgradeBuiltins(words: Word[], deleted: Record<string, number>): Promise<void> {
+  const byId = new Map(words.map((w) => [w.id, w]));
+  let order = words.reduce((m, w) => Math.max(m, w.order), -1) + 1;
+  const changed: Word[] = [];
+  for (const b of builtinWords()) {
+    const mine = byId.get(b.id);
+    if (!mine) {
+      if (deleted[b.id] !== undefined) continue;
+      const added = { ...b, order: order++ };
+      words.push(added);
+      changed.push(added);
+      continue;
+    }
+    let next = mine;
+    if (!mine.kk && b.kk) next = { ...next, kk: b.kk };
+    if (mine.source === 'builtin' && !mine.editedAt && mine.district === 'dock' && b.district !== 'dock') next = { ...next, district: b.district };
+    if (next !== mine) {
+      words[words.indexOf(mine)] = next;
+      changed.push(next);
+    }
+  }
+  if (changed.length) await putWords(changed);
 }
 
 export async function putWords(words: Word[]): Promise<void> {
