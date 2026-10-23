@@ -245,7 +245,6 @@ button:disabled { cursor: default; opacity: 0.5; }
 .mini-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 10px; border-radius: 10px; background: #F7F9FA; border: 1px solid var(--track); }
 .mini-chip.warn { background: var(--warn-bg); border-color: var(--warn-line); }
 
-.syn { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: #EEF2F8; border: 1px solid #D5DEEA; }
 .btn-primary:disabled { opacity: 0.55; }
 .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .option { min-height: 64px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
@@ -287,3 +286,21 @@ button:disabled { cursor: default; opacity: 0.5; }
 .root-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 10px; border-radius: 8px; background: var(--surface); border: 1px solid #EFE2CC; }
 .root-chip b { color: var(--warn-ink); }
 .district-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+
+/* Answer card: compact header, synonym/antonym rows. */
+.back-head { display: flex; align-items: flex-start; gap: 12px; }
+.stack-2 { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.back-sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.back-sub .kk { font-size: 16px; }
+.flash.back { gap: 12px; }
+.flash.back .roots, .flash.back .example, .flash.back .thes { padding: 10px 12px; }
+.thes { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: #EEF2F8; border: 1px solid #D5DEEA; }
+.thes-row { display: flex; align-items: baseline; gap: 10px; line-height: 1.5; }
+.thes-tag { flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transform: translateY(-1px); }
+.thes-tag.syn { background: var(--navy); color: #fff; }
+.thes-tag.ant { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--warn-line); }
+.thes-known { color: var(--navy); }
+@media (max-width: 720px) {
+  .flash.back .word-lg { font-size: 28px; }
+  .flash.back .meaning { font-size: 20px; }
+}

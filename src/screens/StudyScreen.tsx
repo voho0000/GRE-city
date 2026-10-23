@@ -10,6 +10,7 @@ import { useStore } from '../lib/store';
 import { findInSentence } from '../lib/example';
 import { rootsFor } from '../lib/roots';
 import { buildSynonymIndex } from '../lib/synonyms';
+import { thesaurusFor, type Related } from '../lib/thesaurus';
 import type { Rating, Word } from '../lib/types';
 
 type Phase = 'front' | 'back' | 'done';
@@ -163,20 +164,24 @@ function DistrictChip({ word }: { word: Word }) {
 }
 
 function Pronunciation({ word, align = 'center' }: { word: Word; align?: 'center' | 'start' }) {
-  const { settings } = useStore();
   if (!word.kk && !canPronounce()) return null;
   return (
     <span className={`pron ${align}`}>
       {word.kk && <span className="kk">[{word.kk}]</span>}
-      {canPronounce() && (
-        <button type="button" className="icon-btn speak" aria-label={`唸出 ${word.word}`} title="發音（P）" onClick={() => speak(word.word, settings.voiceSource)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M11 5 6 9H3v6h3l5 4V5z" />
-            <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
-          </svg>
-        </button>
-      )}
+      {canPronounce() && <SpeakButton word={word} />}
     </span>
+  );
+}
+
+function SpeakButton({ word }: { word: Word }) {
+  const { settings } = useStore();
+  return (
+    <button type="button" className="icon-btn speak" aria-label={`唸出 ${word.word}`} title="發音（P）" onClick={() => speak(word.word, settings.voiceSource)}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M11 5 6 9H3v6h3l5 4V5z" />
+        <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+      </svg>
+    </button>
   );
 }
 
@@ -213,20 +218,40 @@ function ExampleSentence({ sentence, word }: { sentence: string; word: string })
 function RootBlock({ id }: { id: string }) {
   const info = rootsFor(id);
   if (!info) return null;
+  if (!info.parts.length)
+    return (
+      <div className="roots">
+        <span className="small"><span className="w500">字源</span>　<span className="muted">{info.note}</span></span>
+      </div>
+    );
   return (
     <div className="roots">
-      <span className="small w500">{info.parts.length ? '字根' : '字源'}</span>
-      {info.parts.length > 0 && (
-        <div className="root-parts">
-          {info.parts.map((p, i) => (
-            <span key={i} className="root-part">
-              {i > 0 && <span className="muted" aria-hidden="true">+</span>}
-              <span className="root-chip"><b className="latin">{p.morph}</b>{p.meaning && <span className="small">{p.meaning}</span>}</span>
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="root-parts">
+        <span className="small w500">字根</span>
+        {info.parts.map((p, i) => (
+          <span key={i} className="root-part">
+            {i > 0 && <span className="muted" aria-hidden="true">+</span>}
+            <span className="root-chip"><b className="latin">{p.morph}</b>{p.meaning && <span className="small">{p.meaning}</span>}</span>
+          </span>
+        ))}
+      </div>
       {info.note && <span className="small muted">{info.note}</span>}
+    </div>
+  );
+}
+
+function RelatedRow({ label, kind, items }: { label: string; kind: 'syn' | 'ant'; items: Related[] }) {
+  return (
+    <div className="thes-row">
+      <span className={`thes-tag ${kind}`} aria-label={kind === 'syn' ? '同義字' : '反義字'}>{label}</span>
+      <span className="latin">
+        {items.map((r, i) => (
+          <span key={r.text}>
+            {i > 0 && <span className="muted"> · </span>}
+            {r.known ? <b className="thes-known" title="也在你的字庫裡">{r.text}</b> : r.text}
+          </span>
+        ))}
+      </span>
     </div>
   );
 }
@@ -243,7 +268,10 @@ function rateHint(word: Word, rating: Rating): string {
 }
 
 function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words: Word[]; synonyms: string[]; byId: Map<string, Word>; busy: boolean; onRate: (r: Rating) => void }) {
-  const syn = synonyms.map((id) => byId.get(id)).filter((w): w is Word => !!w).slice(0, 6);
+  const thes = useMemo(() => {
+    const sameSense = synonyms.map((id) => byId.get(id)).filter((w): w is Word => !!w);
+    return thesaurusFor(word, sameSense, new Set(byId.keys()));
+  }, [word, synonyms, byId]);
   const d = DISTRICT_BY_ID[word.district];
   const neighbors = useMemo(
     () =>
@@ -255,11 +283,16 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
   );
   return (
     <div className="study-body">
-      <div className="card flash">
-        <div className="stack-4">
-          <span className="latin word-lg">{word.word}</span>
-          <Pronunciation word={word} align="start" />
-          {word.pos && <span className="muted small">{word.pos}</span>}
+      <div className="card flash back">
+        <div className="back-head">
+          <div className="stack-2 grow">
+            <span className="latin word-lg">{word.word}</span>
+            <span className="back-sub">
+              {word.kk && <span className="kk">[{word.kk}]</span>}
+              {word.pos && <span className="muted small">{word.pos}</span>}
+            </span>
+          </div>
+          {canPronounce() && <SpeakButton word={word} />}
         </div>
         <span className="meaning">{word.zh}</span>
         <RootBlock id={word.id} />
@@ -269,11 +302,10 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
             {word.exampleZh && <span className="small muted">{word.exampleZh}</span>}
           </div>
         )}
-        {syn.length > 0 && (
-          <div className="syn">
-            <span className="small w500">同義字</span>
-            <span className="latin">{syn.map((w) => w.word).join(' · ')}</span>
-            <span className="tiny muted">SE 題常把這幾個字配成一對</span>
+        {(thes.synonyms.length > 0 || thes.antonyms.length > 0) && (
+          <div className="thes">
+            {thes.synonyms.length > 0 && <RelatedRow label="同" kind="syn" items={thes.synonyms} />}
+            {thes.antonyms.length > 0 && <RelatedRow label="反" kind="ant" items={thes.antonyms} />}
           </div>
         )}
         <div className="district-line small muted">
