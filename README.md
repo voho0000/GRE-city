@@ -27,6 +27,10 @@
   <img src="docs/images/study-done.png" width="260" alt="答對後建築升級">
 </p>
 
+**同義字練習（SE）**：六個字選出意思相同的兩個，答完顯示每個字的中文和共同意思。
+
+<p><img src="docs/images/practice-result.png" width="300" alt="同義字練習：選出兩個意思相同的字"></p>
+
 **統計頁的每日紀錄**：點日曆上任一天，看那天蓋了什麼、升級和拆掉了哪些、忘了哪些字。
 
 ![統計頁：每日紀錄](docs/images/daily-log.png)
