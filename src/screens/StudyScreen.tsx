@@ -3,11 +3,12 @@ import { Building } from '../components/Building';
 import { SilentModeTip } from '../components/SilentModeTip';
 import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
-import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
+import { LEVEL_NAMES, daysLabel } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import { findInSentence } from '../lib/example';
+import { rootsFor } from '../lib/roots';
 import { buildSynonymIndex } from '../lib/synonyms';
 import type { Rating, Word } from '../lib/types';
 
@@ -208,15 +209,25 @@ function ExampleSentence({ sentence, word }: { sentence: string; word: string })
   );
 }
 
-function Highlighted({ word }: { word: Word }) {
-  const span = rootSpan(word);
-  if (!span) return <>{word.word}</>;
+/** The word's own root breakdown (or origin story), so the meaning can be rebuilt from its parts. */
+function RootBlock({ id }: { id: string }) {
+  const info = rootsFor(id);
+  if (!info) return null;
   return (
-    <>
-      {word.word.slice(0, span[0])}
-      <mark className="root-mark">{word.word.slice(span[0], span[1])}</mark>
-      {word.word.slice(span[1])}
-    </>
+    <div className="roots">
+      <span className="small w500">{info.parts.length ? '字根' : '字源'}</span>
+      {info.parts.length > 0 && (
+        <div className="root-parts">
+          {info.parts.map((p, i) => (
+            <span key={i} className="root-part">
+              {i > 0 && <span className="muted" aria-hidden="true">+</span>}
+              <span className="root-chip"><b className="latin">{p.morph}</b>{p.meaning && <span className="small">{p.meaning}</span>}</span>
+            </span>
+          ))}
+        </div>
+      )}
+      {info.note && <span className="small muted">{info.note}</span>}
+    </div>
   );
 }
 
@@ -246,11 +257,12 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
     <div className="study-body">
       <div className="card flash">
         <div className="stack-4">
-          <span className="latin word-lg"><Highlighted word={word} /></span>
+          <span className="latin word-lg">{word.word}</span>
           <Pronunciation word={word} align="start" />
           {word.pos && <span className="muted small">{word.pos}</span>}
         </div>
         <span className="meaning">{word.zh}</span>
+        <RootBlock id={word.id} />
         {word.example && (
           <div className="example">
             <span className="latin"><ExampleSentence sentence={word.example} word={word.word} /></span>
@@ -264,12 +276,9 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
             <span className="tiny muted">SE 題常把這幾個字配成一對</span>
           </div>
         )}
-        <div className="panel stack-6">
-          <span className="small muted w500"><DistrictChip word={word} /> <span className="latin">{d.root}</span></span>
-          <span className="small">{d.note}</span>
-          {neighbors.length > 0 && (
-            <span className="small muted">同街鄰居：<span className="latin">{neighbors.map((n) => n.word).join(' · ')}</span></span>
-          )}
+        <div className="district-line small muted">
+          <DistrictChip word={word} />
+          <span>{d.note}{neighbors.length > 0 && <>，同街：<span className="latin">{neighbors.map((n) => n.word).join(' · ')}</span></>}</span>
         </div>
       </div>
       <div className="rate-row">
