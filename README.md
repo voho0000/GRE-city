@@ -35,4 +35,4 @@ npm test         # 單元測試
 npm run build    # 輸出到 dist/，可直接放上任何靜態網站主機
 ```
 
-技術：React + Vite + TypeScript。城市用 SVG 繪製，資料存在瀏覽器的 IndexedDB，沒有後端。打包後可當 PWA 安裝到手機。內建約 350 個 GRE 高頻字當起始字表。
+技術：React + Vite + TypeScript。城市用 SVG 繪製，資料存在瀏覽器的 IndexedDB，沒有後端。打包後可當 PWA 安裝到手機。內建 383 個 GRE 高頻字當起始字表。
