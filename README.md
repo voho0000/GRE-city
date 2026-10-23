@@ -24,6 +24,10 @@
   <img src="docs/images/study-done.png" width="260" alt="答對後建築升級">
 </p>
 
+**統計頁的每日紀錄**：點日曆上任一天，看那天蓋了什麼、升級和拆掉了哪些、忘了哪些字。
+
+![統計頁：每日紀錄](docs/images/daily-log.png)
+
 ## 建築與複習間隔
 
 ![六種建築與荒廢狀態](docs/images/building-types.png)
