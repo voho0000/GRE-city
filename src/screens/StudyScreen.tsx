@@ -12,7 +12,7 @@ const REQUEUE_GAP = 5;
 const EXTRA_BATCH = 10;
 
 export function StudyScreen() {
-  const { words, byId, settings, rate } = useStore();
+  const { words, byId, settings, rate, syncNow } = useStore();
   const [queue, setQueue] = useState<string[]>(() => buildQueue(words, Date.now(), settings.dailyNew));
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
@@ -23,6 +23,11 @@ export function StudyScreen() {
   const id = queue[pos];
   const word = id ? byId.get(id) : undefined;
   const finished = pos >= queue.length;
+
+  // Finishing the day's queue is a natural point to upload.
+  useEffect(() => {
+    if (finished && queue.length) void syncNow();
+  }, [finished, queue.length, syncNow]);
 
   const submit = async (rating: Rating) => {
     if (!word || busy) return;

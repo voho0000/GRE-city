@@ -26,6 +26,8 @@ export interface Word {
   order: number;
   source: 'builtin' | 'import';
   srs: Srs | null;
+  /** Last time the word itself (meaning, district…) was changed; decides sync conflicts. */
+  editedAt?: number;
 }
 
 export interface LogEntry {
@@ -42,6 +44,7 @@ export interface Settings {
   /** New words introduced per day; each person picks their own on first visit. */
   dailyNew: number;
   onboarded: boolean;
+  updatedAt?: number;
 }
 
 export const DAILY_MIN = 1;

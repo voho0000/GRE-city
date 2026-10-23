@@ -209,3 +209,7 @@ button:disabled { cursor: default; opacity: 0.5; }
 .preset.on { background: var(--navy); border-color: var(--navy); color: #fff; }
 .btn-text { background: none; border: 0; color: var(--navy); font-size: 13px; min-height: 44px; padding: 0 4px; text-decoration: underline; text-underline-offset: 3px; }
 .welcome { border-color: var(--navy); }
+
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.sync-badge { color: var(--muted); text-decoration: none; padding: 8px; min-height: 44px; display: inline-flex; align-items: center; }

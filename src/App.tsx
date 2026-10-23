@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DISTRICTS } from './data/districts';
 import { buildQueue, newIntroducedToday } from './lib/srs';
+import { SyncBadge } from './components/SyncPanel';
 import { useStore } from './lib/store';
 import { dayKey, startOfDay, streakDays } from './lib/time';
 import { CityScreen } from './screens/CityScreen';
@@ -66,6 +67,7 @@ export function App() {
           ))}
         </nav>
         <div className="grow" />
+        <SyncBadge />
         <div className="top-stats small muted">
           <span><b className="latin">{info.built}</b> 棟</span>
           <span><b className="latin">{info.landmarks}</b> 地標</span>
@@ -77,7 +79,7 @@ export function App() {
       {route === 'library' && <LibraryScreen />}
       {route === 'stats' && <StatsScreen />}
       <footer className="foot small muted">
-        {DISTRICTS.length} 個街區 · 資料只存在這台裝置的瀏覽器
+        {DISTRICTS.length} 個街區 · 資料存在這台裝置的瀏覽器，可在字庫頁開啟跨裝置同步
       </footer>
     </div>
   );

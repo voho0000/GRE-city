@@ -19,7 +19,7 @@ describe('db', () => {
   });
 
   it('restores a backup in place of everything', async () => {
-    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true } });
+    await replaceAll({ words: [], logs: [], settings: { dailyNew: 35, onboarded: true }, deleted: {} });
     const snap = await loadAll();
     expect(snap.words).toHaveLength(0);
     expect(snap.settings).toEqual({ dailyNew: 35, onboarded: true });

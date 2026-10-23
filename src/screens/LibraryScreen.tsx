@@ -3,6 +3,7 @@ import { DISTRICTS, DISTRICT_BY_ID } from '../data/districts';
 import { parseWordList, type ParsedRow } from '../lib/csv';
 import type { Snapshot } from '../lib/db';
 import { LEVEL_NAMES } from '../lib/levels';
+import { SyncPanel } from '../components/SyncPanel';
 import { useStore } from '../lib/store';
 import { dayKey } from '../lib/time';
 import type { DistrictId } from '../lib/types';
@@ -26,14 +27,15 @@ export function LibraryScreen() {
 
   return (
     <main className="page">
-      <div className="grid2">
+      <div className="grid3">
         <ImportPanel />
+        <SyncPanel />
         <BackupPanel />
       </div>
       <section className="card stack">
         <div className="row wrap gap-12 baseline">
           <h2 className="h2 lg">字庫</h2>
-          <span className="small muted">共 {words.length} 字，已蓋 {words.filter((w) => w.srs).length} 棟。從碼頭拖進街區＝改分區。</span>
+          <span className="small muted">共 {words.length} 字，已蓋 {words.filter((w) => w.srs).length} 棟。用「街區」選單把字搬到別區。</span>
         </div>
         <div className="row wrap gap-12">
           <label className="field grow">
@@ -149,7 +151,7 @@ function BackupPanel() {
       const data = JSON.parse(await file.text()) as Snapshot & { app?: string };
       if (data.app !== 'gre-city' || !Array.isArray(data.words) || !Array.isArray(data.logs)) throw new Error('bad file');
       if (!confirm(`用備份取代目前的城市？備份裡有 ${data.words.length} 字。`)) return;
-      await restoreBackup({ words: data.words, logs: data.logs, settings: data.settings });
+      await restoreBackup({ words: data.words, logs: data.logs, settings: data.settings, deleted: data.deleted ?? {} });
       setMessage('已還原備份。');
     } catch {
       setMessage('這不是字城的備份檔。');
@@ -161,7 +163,7 @@ function BackupPanel() {
   return (
     <section className="card stack">
       <h2 className="h2">備份</h2>
-      <p className="small muted">資料只存在這個瀏覽器。換裝置或清除瀏覽資料前，先下載備份。</p>
+      <p className="small muted">下載一份 JSON 檔留存。還原會用備份取代這台裝置目前的資料。</p>
       <div className="row wrap gap-12">
         <button type="button" className="btn-primary" onClick={download}>下載備份</button>
         <label className="btn-ghost file-btn">
