@@ -39,7 +39,11 @@ export interface LogEntry {
 }
 
 export interface Settings {
+  /** New words introduced per day; each person picks their own on first visit. */
   dailyNew: number;
+  onboarded: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { dailyNew: 50 };
+export const DAILY_MIN = 1;
+export const DAILY_MAX = 500;
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false };

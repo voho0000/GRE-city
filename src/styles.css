@@ -202,3 +202,10 @@ button:disabled { cursor: default; opacity: 0.5; }
 }
 
 @media (hover: none) { .kbd-hint { display: none; } }
+
+.stack-10 { display: flex; flex-direction: column; gap: 10px; }
+.presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.preset { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-family: var(--latin); font-size: 17px; font-weight: 700; }
+.preset.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn-text { background: none; border: 0; color: var(--navy); font-size: 13px; min-height: 44px; padding: 0 4px; text-decoration: underline; text-underline-offset: 3px; }
+.welcome { border-color: var(--navy); }

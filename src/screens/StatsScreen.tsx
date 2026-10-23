@@ -4,6 +4,7 @@ import { LEVEL_NAMES } from '../lib/levels';
 import { decayOf } from '../lib/srs';
 import { useStore } from '../lib/store';
 import { addDays, dayKey, streakDays } from '../lib/time';
+import { DAILY_MAX, DAILY_MIN } from '../lib/types';
 
 export function StatsScreen() {
   const { words, logs, settings, setSettings } = useStore();
@@ -35,7 +36,7 @@ export function StatsScreen() {
   const maxDay = Math.max(1, ...s.recent.map((r) => r.built + r.reviews));
   const save = () => {
     const n = Math.round(Number(daily));
-    if (n >= 1 && n <= 500) setSettings({ ...settings, dailyNew: n });
+    if (n >= DAILY_MIN && n <= DAILY_MAX) setSettings({ dailyNew: n, onboarded: true });
   };
 
   return (
@@ -112,7 +113,7 @@ export function StatsScreen() {
           <div className="row wrap gap-12 end">
             <label className="field">
               <span className="small muted">每天新字數</span>
-              <input type="number" min={1} max={500} value={daily} onChange={(e) => setDaily(e.target.value)} />
+              <input type="number" min={DAILY_MIN} max={DAILY_MAX} value={daily} onChange={(e) => setDaily(e.target.value)} />
             </label>
             <button type="button" className="btn-primary" onClick={save}>儲存</button>
           </div>

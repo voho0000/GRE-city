@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as db from './db';
 import { applyRating, type RatingResult } from './srs';
-import type { DistrictId, LogEntry, Rating, Settings, Word } from './types';
+import { DEFAULT_SETTINGS, type DistrictId, type LogEntry, type Rating, type Settings, type Word } from './types';
 import type { ParsedRow } from './csv';
 
 interface Store {
@@ -108,7 +108,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     words,
     byId,
     logs: snap?.logs ?? [],
-    settings: snap?.settings ?? { dailyNew: 50 },
+    settings: snap?.settings ?? DEFAULT_SETTINGS,
     rate,
     importRows,
     moveWord,

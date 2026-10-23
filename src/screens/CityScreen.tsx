@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CityMap } from '../components/CityMap';
+import { DailyGoal } from '../components/DailyGoal';
 import { DISTRICTS, DISTRICT_BY_ID } from '../data/districts';
 import { layoutCity } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
@@ -11,7 +12,8 @@ import type { DistrictId } from '../lib/types';
 const CHIP_LIMIT = 120;
 
 export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: number; newToday: number; reviewsDone: number }) {
-  const { words, byId, settings } = useStore();
+  const { words, byId, logs, settings, setSettings } = useStore();
+  const [editingGoal, setEditingGoal] = useState(false);
   // Decay is judged as of the last data change; the screen re-renders on every rating anyway.
   const now = useMemo(() => Date.now(), [words]);
   const layout = useMemo(() => layoutCity(words, now), [words, now]);
@@ -49,14 +51,37 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
     const w = byId.get(id);
     if (w) setDistrict(w.district);
   };
+  const firstVisit = !settings.onboarded && logs.length === 0;
+  const remaining = words.filter((w) => !w.srs).length;
   const done = newToday + reviewsDone;
   const total = done + queueSize;
 
   return (
     <main className="city">
       <aside className="city-side">
+        {firstVisit ? (
+          <section className="card stack welcome">
+            <h2 className="h2 lg">歡迎來到字城</h2>
+            <p className="small">每背會一個新字，就在島上蓋一棟建築；複習答對，建築就升級。先決定每天想蓋幾棟新建築吧，之後隨時可以在這裡調整。</p>
+            <DailyGoal initial={settings.dailyNew} remaining={remaining} confirmLabel="開始建城" onConfirm={(n) => setSettings({ dailyNew: n, onboarded: true })} />
+          </section>
+        ) : editingGoal ? (
+          <section className="card stack">
+            <h2 className="h2">每天新建幾棟？</h2>
+            <DailyGoal
+              initial={settings.dailyNew}
+              remaining={remaining}
+              confirmLabel="儲存"
+              onConfirm={(n) => { setSettings({ dailyNew: n, onboarded: true }); setEditingGoal(false); }}
+              onCancel={() => setEditingGoal(false)}
+            />
+          </section>
+        ) : (
         <section className="card stack">
-          <h2 className="h2">今日工地</h2>
+          <div className="row-between">
+            <h2 className="h2">今日工地</h2>
+            {!editingGoal && <button type="button" className="btn-text" onClick={() => setEditingGoal(true)}>每天 {settings.dailyNew} 棟 · 調整</button>}
+          </div>
           <div className="tiles3">
             <div className="tile"><span className="muted small">新地基</span><span className="num">{newToday}<span className="small muted"> / {settings.dailyNew}</span></span></div>
             <div className="tile"><span className="muted small">待施工</span><span className="num">{queueSize}</span></div>
@@ -68,6 +93,7 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
           </div>
           <a className="btn-primary" href="#/study">{queueSize ? `開始施工 · ${queueSize}` : '今天的工地完工了'}</a>
         </section>
+        )}
         <section className="card list">
           <h2 className="h2 pad">街區</h2>
           {DISTRICTS.map((x) => {
