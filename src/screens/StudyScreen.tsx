@@ -8,7 +8,6 @@ import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } fr
 import { dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../lib/learning';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
-import { dayKey } from '../lib/time';
 import { findInSentence } from '../lib/example';
 import { rootsFor } from '../lib/roots';
 import { buildSynonymIndex } from '../lib/synonyms';
@@ -120,12 +119,15 @@ export function StudyScreen() {
   });
 
   // Count the whole day, not just this visit: words already answered today stay done after leaving and coming back.
-  const { progress, total } = useMemo(() => {
-    const remaining = new Set(queue.slice(pos + (phase === 'done' ? 1 : 0)));
-    const today = dayKey(Date.now());
-    const done = new Set(logs.filter((l) => dayKey(l.at) === today && !remaining.has(l.wordId)).map((l) => l.wordId));
-    return { progress: done.size, total: done.size + remaining.size };
-  }, [logs, queue, pos, phase]);
+  // The whole day, not just this visit: every word answered today, grouped by its latest answer, plus what is left.
+  const tally = useMemo(() => {
+    const counts: Record<Rating, number> = { again: 0, hard: 0, good: 0 };
+    for (const st of today.values()) counts[st.last]++;
+    const answered = today.size;
+    const left = new Set(queue.slice(pos + (phase === 'done' ? 1 : 0)).filter((id) => !today.has(id))).size;
+    return { counts, answered, left, total: answered + left };
+  }, [today, queue, pos, phase]);
+  const pct = (n: number) => `${tally.total ? (n / tally.total) * 100 : 0}%`;
 
   return (
     <main className="study">
@@ -134,8 +136,10 @@ export function StudyScreen() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
         </a>
         <div className="grow stack-6">
-          <div className="row-between small muted"><span>今日工地</span><span>{progress} / {total}</span></div>
-          <div className="bar"><div style={{ width: `${total ? (progress / total) * 100 : 0}%`, background: '#1F3A5F' }} /></div>
+          <div className="row-between small muted"><span>今日工地</span><span>已答 <b className="ink">{tally.answered}</b> / {tally.total}</span></div>
+          <div className="bar stacked" role="img" aria-label={`會了 ${tally.counts.good}，看了才想起 ${tally.counts.hard}，不會 ${tally.counts.again}，還剩 ${tally.left}`}>
+            {(['good', 'hard', 'again'] as Rating[]).map((r) => <span key={r} className={`seg seg-${r}`} style={{ width: pct(tally.counts[r]) }} />)}
+          </div>
         </div>
         {history.length > 0 && phase !== 'back' && !finished && (
           <button type="button" className="icon-btn" aria-label="上一步：收回剛才的評分" title="上一步（Z）" disabled={busy} onClick={() => void undo()}>
@@ -147,6 +151,12 @@ export function StudyScreen() {
             自動發音
           </button>
         )}
+      </div>
+      <div className="tally small">
+        <span><i className="seg-good" />會了 <b>{tally.counts.good}</b></span>
+        <span><i className="seg-hard" />看了才想起 <b>{tally.counts.hard}</b></span>
+        <span><i className="seg-again" />不會 <b>{tally.counts.again}</b></span>
+        <span className="tally-left"><i className="seg-left" />還沒答 <b>{tally.left}</b></span>
       </div>
 
       {canPronounce() && <SilentModeTip />}
