@@ -167,7 +167,7 @@ export function CityMap({ layout, selectedDistrict, selectedWord, focus, onSelec
             </g>
           );
         })}
-        {sel && <WordTag x={sel.cx} y={sel.cy - (ROOF[sel.word.srs?.level ?? 0] ?? 40)} u={u} word={sel.word.word} zh={sel.word.zh} />}
+        {sel && <WordTag x={sel.cx} y={Math.min(sel.cy - HH, roofOf(sel.parts))} u={u} word={sel.word.word} zh={sel.word.zh} />}
       </svg>
       <div className="map-tools">
         <button type="button" className="icon-btn" aria-label="縮小" onClick={() => zoomCenter(1.25)}>
@@ -189,8 +189,19 @@ function edge(c: string) {
   return mix(c, '#FFFFFF', 0.45);
 }
 
-/** Roughly how tall each level's building stands, so the tag floats just above its roof. */
-const ROOF = [6, 18, 34, 48, 64, 70];
+/** The highest point the building is actually drawn at, so the tag sits just above its roof whatever its state. */
+function roofOf(parts: { d: string }[]): number {
+  let top = Infinity;
+  for (const p of parts) {
+    // Absolute M/L/A/Z commands only; an arc's end point is its last two numbers.
+    for (const [, cmd, args] of p.d.matchAll(/([MLAZ])([^MLAZ]*)/g)) {
+      const n = (args.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+      if (cmd === 'A') top = Math.min(top, n[n.length - 1], n[n.length - 1] - n[1]);
+      else for (let i = 1; i < n.length; i += 2) top = Math.min(top, n[i]);
+    }
+  }
+  return top;
+}
 
 /** A callout naming the tapped building, kept a constant on-screen size like the district labels. */
 function WordTag({ x, y, u, word, zh }: { x: number; y: number; u: number; word: string; zh: string }) {

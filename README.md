@@ -24,7 +24,7 @@
 
 <p>
   <img src="docs/images/study-front.png" width="260" alt="複習：看字想意思">
-  <img src="docs/images/study-back.png" width="260" alt="點卡片或「翻面」後自評">
+  <img src="docs/images/study-back.png" width="260" alt="背面：字根、例句、同反義字；上方進度條依會了／看了才想起／不會分色">
   <img src="docs/images/study-done.png" width="260" alt="答對後建築升級">
 </p>
 
@@ -56,7 +56,7 @@
 - 逾期超過一個間隔：建築長草，必須先答對一次「修復」才能再升級。
 
 <p>
-  <img src="docs/images/district.png" width="49%" alt="放大到單一街區">
+  <img src="docs/images/district.png" width="49%" alt="放大到單一街區，點建築顯示是哪個字">
   <img src="docs/images/stats.png" width="49%" alt="統計">
 </p>
 
