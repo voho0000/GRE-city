@@ -19,7 +19,7 @@ describe('upgrading a city started on the 382-word list', () => {
     const erudite = await raw.get('words', 'erudite');
     await raw.put('words', { ...erudite, district: 'dock', srs: { level: 3, due: 1, lapses: 1, reps: 4, introducedAt: 1, lastAt: 1 } });
     const lucid = await raw.get('words', 'lucid');
-    await raw.put('words', { ...lucid, district: 'dock', kk: undefined });
+    await raw.put('words', { ...lucid, district: 'dock', kk: undefined, example: '', exampleZh: undefined });
     const gone = all.find((w) => !keep.has(w.id))!.id;
     await raw.put('meta', { [gone]: 5 }, 'deleted');
     await raw.put('meta', 1, 'builtinVersion');
@@ -31,6 +31,7 @@ describe('upgrading a city started on the 382-word list', () => {
     expect(byId.has(gone)).toBe(false);
     expect(byId.get('erudite')).toMatchObject({ district: 'mind', srs: { level: 3, lapses: 1 } });
     expect(byId.get('lucid')).toMatchObject({ district: 'clarity', kk: 'ˋlusɪd' });
+    expect(byId.get('lucid')!.example).toMatch(/lucid/i);
     const orders = snap.words.map((w) => w.order);
     expect(new Set(orders).size).toBe(orders.length);
 

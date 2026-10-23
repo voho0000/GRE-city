@@ -248,6 +248,12 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
           {word.pos && <span className="muted small">{word.pos}</span>}
         </div>
         <span className="meaning">{word.zh}</span>
+        {word.example && (
+          <div className="example">
+            <span className="latin"><ExampleSentence sentence={word.example} word={word.word} /></span>
+            {word.exampleZh && <span className="small muted">{word.exampleZh}</span>}
+          </div>
+        )}
         {syn.length > 0 && (
           <div className="syn">
             <span className="small w500">同義字</span>
@@ -262,12 +268,6 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
             <span className="small muted">同街鄰居：<span className="latin">{neighbors.map((n) => n.word).join(' · ')}</span></span>
           )}
         </div>
-        {word.example && (
-          <div className="example">
-            <span className="latin"><ExampleSentence sentence={word.example} word={word.word} /></span>
-            {word.exampleZh && <span className="small muted">{word.exampleZh}</span>}
-          </div>
-        )}
       </div>
       <div className="rate-row">
         {(['again', 'hard', 'good'] as Rating[]).map((r, i) => (

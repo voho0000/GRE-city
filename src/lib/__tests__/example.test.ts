@@ -23,3 +23,11 @@ describe('findInSentence', () => {
     expect(pick('Nothing relevant here.', 'loquacious')).toBeNull();
   });
 });
+
+describe('built-in examples', () => {
+  it('gives every built-in word an example that uses it, with a translation', async () => {
+    const { builtinWords } = await import('../../data/seed');
+    const missing = builtinWords().filter((w) => !w.example || !w.exampleZh || !findInSentence(w.example, w.word));
+    expect(missing.map((w) => w.id)).toEqual([]);
+  });
+});

@@ -110,7 +110,7 @@ function ImportPanel() {
   return (
     <section className="card stack">
       <h2 className="h2">匯入字表</h2>
-      <p className="small muted">貼上 CSV 或從 Excel 複製（Tab 分隔），第一列寫欄位名稱：<span className="latin">word, zh, pos, kk, example, district</span>，順序不限，只有 word 和 zh 必填；沒填街區會依字根和中文自動分區。</p>
+      <p className="small muted">貼上 CSV 或從 Excel 複製（Tab 分隔），第一列寫欄位名稱：<span className="latin">word, zh, pos, kk, example, example_zh, district</span>，順序不限，只有 word 和 zh 必填；沒填街區會依字根和中文自動分區。</p>
       <label className="field">
         <span className="small muted">字表內容</span>
         <textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder={'word,zh,pos,kk\nloquacious,多話的,adj.,loˋkweʃəs'} />
