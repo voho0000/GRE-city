@@ -167,6 +167,7 @@ export function CityMap({ layout, selectedDistrict, selectedWord, focus, onSelec
             </g>
           );
         })}
+        {sel && <WordTag x={sel.cx} y={sel.cy - (ROOF[sel.word.srs?.level ?? 0] ?? 40)} u={u} word={sel.word.word} zh={sel.word.zh} />}
       </svg>
       <div className="map-tools">
         <button type="button" className="icon-btn" aria-label="縮小" onClick={() => zoomCenter(1.25)}>
@@ -186,4 +187,26 @@ function tint(c: string) {
 }
 function edge(c: string) {
   return mix(c, '#FFFFFF', 0.45);
+}
+
+/** Roughly how tall each level's building stands, so the tag floats just above its roof. */
+const ROOF = [6, 18, 34, 48, 64, 70];
+
+/** A callout naming the tapped building, kept a constant on-screen size like the district labels. */
+function WordTag({ x, y, u, word, zh }: { x: number; y: number; u: number; word: string; zh: string }) {
+  const sense = zh.length > 10 ? `${zh.slice(0, 10)}…` : zh;
+  const w = (word.length * 8.6 + sense.length * 13 + 34) * u;
+  const h = 30 * u;
+  const tip = 7 * u;
+  const top = y - tip - h;
+  return (
+    <g pointerEvents="none" className="word-tag">
+      <path d={`M${x - tip},${top + h} L${x},${y} L${x + tip},${top + h} Z`} fill="#17222D" />
+      <rect x={x - w / 2} y={top} width={w} height={h} rx={8 * u} fill="#17222D" />
+      <text x={x - w / 2 + 12 * u} y={top + h / 2} dominantBaseline="central" fontSize={14 * u} fill="#FFFFFF">
+        <tspan fontWeight={700} fontFamily="'Space Grotesk', sans-serif">{word}</tspan>
+        <tspan dx={8 * u} fontSize={13 * u} fill="#D5DEEA">{sense}</tspan>
+      </text>
+    </g>
+  );
 }
