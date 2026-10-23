@@ -27,7 +27,7 @@ export function StudyScreen() {
   });
   const [pos, setPos] = useState(0);
   const [phase, setPhase] = useState<Phase>('front');
-  const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean; resting: boolean } | null>(null);
+  const [result, setResult] = useState<{ rating: Rating; r: RatingResult; requeued: boolean; later: boolean; resting: boolean } | null>(null);
   const [session, setSession] = useState({ built: 0, raised: 0, again: 0 });
   const [busy, setBusy] = useState(false);
   // Screen state before each rating, so a mis-tap can be taken back.
@@ -52,10 +52,11 @@ export function StudyScreen() {
     const state = step(today.get(word.id), rating, r.isNew);
     const gap = repeatGap(state);
     const requeued = gap !== null;
+    const later = gap === 'end';
     if (gap !== null) {
       setQueue((q) => {
         const next = [...q];
-        next.splice(Math.min(pos + 1 + gap, next.length), 0, word.id);
+        next.splice(gap === 'end' ? next.length : Math.min(pos + 1 + gap, next.length), 0, word.id);
         return next;
       });
     }
@@ -64,7 +65,7 @@ export function StudyScreen() {
       raised: s.raised + (!r.isNew && r.levelAfter > r.levelBefore ? 1 : 0),
       again: s.again + (rating === 'again' ? 1 : 0),
     }));
-    setResult({ rating, r, requeued, resting: restingToday(state) });
+    setResult({ rating, r, requeued, later, resting: restingToday(state) });
     setPhase('done');
     setBusy(false);
   };
@@ -351,24 +352,25 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
   );
 }
 
-function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean, resting: boolean) {
+function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean, later: boolean, resting: boolean) {
   const d = DISTRICT_BY_ID[word.district];
-  const next = requeued ? '等一下' : daysLabel(r.days);
-  if (resting) return { title: '今天先休息', sub: `${word.word} 今天卡了 4 次，再硬背效果有限，明天換個腦袋再來`, next };
+  const next = later ? '今天最後' : requeued ? '等一下' : daysLabel(r.days);
+  if (resting) return { title: '今天先休息', sub: `${word.word} 今天試了好幾次，再硬背效果有限，明天換個腦袋再來`, next };
+  if (later) return { title: '先放一邊', sub: '隔一段時間，今天最後再考一次', next };
   if (r.isNew) {
     if (rating === 'good') return { title: '蓋好小屋！', sub: `${word.word} 落腳${d.name}區`, next };
-    if (rating === 'hard') return { title: '地基打好了', sub: requeued ? '等一下再考一次，確定記住' : '明天回來蓋第一層', next };
+    if (rating === 'hard') return { title: '地基打好了', sub: requeued ? '過幾張再考一次，確定記住' : '明天回來蓋第一層', next };
     return { title: '先放地基', sub: '這個字等一下會再出現', next };
   }
-  if (rating === 'again') return { title: r.levelBefore === 0 && !r.isNew ? '再練一次' : '拆回地基', sub: '別擔心，等一下再見，答出來才算過關', next };
+  if (rating === 'again') return { title: r.levelBefore === 0 && !r.isNew ? '再練一次' : '拆回地基', sub: '過一兩張再見，答出來才算過關', next };
   if (r.repaired) return { title: '修好了！', sub: `${word.word} 恢復${LEVEL_NAMES[r.levelAfter]}的樣子`, next };
   if (rating === 'hard') return { title: '地基穩住了', sub: `維持${LEVEL_NAMES[r.levelAfter]}，下次早點回來`, next };
   if (r.levelAfter === r.levelBefore) return { title: '地標巡禮完成', sub: `${word.word} 依然閃亮`, next };
   return { title: '加蓋一層！', sub: `${word.word} 從${LEVEL_NAMES[r.levelBefore]}蓋到${LEVEL_NAMES[r.levelAfter]}`, next };
 }
 
-function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean; resting: boolean }; onNext: () => void; onUndo: () => void }) {
-  const copy = doneCopy(word, result.rating, result.r, result.requeued, result.resting);
+function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean; later: boolean; resting: boolean }; onNext: () => void; onUndo: () => void }) {
+  const copy = doneCopy(word, result.rating, result.r, result.requeued, result.later, result.resting);
   const d = DISTRICT_BY_ID[word.district];
   return (
     <div className="study-body">

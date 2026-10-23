@@ -2,43 +2,47 @@ import { startOfDay } from './time';
 import type { LogEntry, Rating } from './types';
 
 /**
- * Same-day relearning. A word you missed comes back a few cards later, with the gap growing each time so the
- * answer has to come from memory rather than from the card you just saw. It stays in today's loop until you
- * recall it, but after MAX_AGAIN misses in one day it rests until tomorrow: past that point more repetition
- * mostly breeds fatigue. A new word you only half knew (看了才想起) gets one more pass to settle it.
+ * Same-day relearning. A word you missed comes back soon, mixed in among a couple of other words: first 1–2
+ * cards later, then 2–3 cards later. Two quick repeats are the most that still help; if it is not there yet, it
+ * goes to the end of today's list for one last try after a longer break, and after that rests until tomorrow
+ * rather than turning into rote repetition. A new word you only half knew (看了才想起) counts as not there yet.
  */
-export const AGAIN_GAPS = [3, 5, 8];
-export const HARD_GAP = 8;
-export const MAX_AGAIN = 4;
+export const SHORT_GAPS: [number, number][] = [[1, 2], [2, 3]];
+/** Answers in one day after which a word that still is not recalled rests until tomorrow. */
+export const MAX_TRIES = SHORT_GAPS.length + 2;
 /** New words wait while this many words are still being relearned today. */
 export const LEARNING_LIMIT = 6;
 
 export interface DayState {
   /** First seen today as a new word. */
   newToday: boolean;
+  /** Answers given today. */
+  tries: number;
   agains: number;
-  /** 看了才想起 answers since the last 不會 (or since first seen). */
-  hardsSince: number;
   last: Rating;
 }
 
 export function step(prev: DayState | undefined, rating: Rating, isNew: boolean): DayState {
-  const s = prev ?? { newToday: isNew, agains: 0, hardsSince: 0, last: rating };
-  if (rating === 'again') return { ...s, agains: s.agains + 1, hardsSince: 0, last: rating };
-  if (rating === 'hard') return { ...s, hardsSince: s.hardsSince + 1, last: rating };
-  return { ...s, last: rating };
+  const s = prev ?? { newToday: isNew, tries: 0, agains: 0, last: rating };
+  return { ...s, tries: s.tries + 1, agains: s.agains + (rating === 'again' ? 1 : 0), last: rating };
 }
 
-/** How many cards later the word should come back today, or null when it is done for the day. */
-export function repeatGap(s: DayState | undefined): number | null {
-  if (!s) return null;
-  if (s.last === 'again') return s.agains >= MAX_AGAIN ? null : AGAIN_GAPS[Math.min(s.agains, AGAIN_GAPS.length) - 1];
-  if (s.last === 'hard' && (s.newToday || s.agains > 0) && s.hardsSince === 1) return HARD_GAP;
-  return null;
+/** Still not recalled: 不會, or 看了才想起 on a word that is new today or was missed today. */
+const notYet = (s: DayState) => s.last === 'again' || (s.last === 'hard' && (s.newToday || s.agains > 0));
+
+/**
+ * When the word should come back today: a number of cards later, 'end' for the back of today's list, or null
+ * when it is done for the day (recalled, or rested after too many tries).
+ */
+export function repeatGap(s: DayState | undefined, rand: () => number = Math.random): number | 'end' | null {
+  if (!s || !notYet(s)) return null;
+  const short = SHORT_GAPS[s.tries - 1];
+  if (short) return short[0] + Math.floor(rand() * (short[1] - short[0] + 1));
+  return s.tries < MAX_TRIES ? 'end' : null;
 }
 
-/** True when the word hit today's miss limit and rests until tomorrow. */
-export const restingToday = (s: DayState | undefined) => !!s && s.last === 'again' && s.agains >= MAX_AGAIN;
+/** True when the word used up today's tries without being recalled and rests until tomorrow. */
+export const restingToday = (s: DayState | undefined) => !!s && notYet(s) && s.tries >= MAX_TRIES;
 
 export function dayStates(logs: LogEntry[], now: number): Map<string, DayState> {
   const start = startOfDay(now);
@@ -69,7 +73,7 @@ export function gateNew(queue: string[], at: number, learning: Set<string>, isNe
 }
 
 /** Spreads words being relearned through a fresh queue, a few cards apart, instead of piling them at the end. */
-export function weaveIn(queue: string[], ids: string[], gap = AGAIN_GAPS[0]): string[] {
+export function weaveIn(queue: string[], ids: string[], gap = 2): string[] {
   const inQueue = new Set(queue);
   const out = [...queue];
   ids.filter((id) => !inQueue.has(id)).forEach((id, i) => out.splice(Math.min(i * (gap + 1) + 1, out.length), 0, id));

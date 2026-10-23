@@ -1,25 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { AGAIN_GAPS, HARD_GAP, LEARNING_LIMIT, MAX_AGAIN, dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../learning';
+import { LEARNING_LIMIT, MAX_TRIES, SHORT_GAPS, dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../learning';
 import type { Rating } from '../types';
 
 const run = (ratings: Rating[], isNew = true) => ratings.reduce((s, r) => step(s, r, isNew), undefined as ReturnType<typeof step> | undefined);
+const low = () => 0;
+const high = () => 0.999;
 
 describe('repeatGap', () => {
-  it('brings a missed word back with growing gaps until it is recalled', () => {
-    expect(repeatGap(run(['again']))).toBe(AGAIN_GAPS[0]);
-    expect(repeatGap(run(['again', 'again']))).toBe(AGAIN_GAPS[1]);
-    expect(repeatGap(run(['again', 'again', 'again']))).toBe(AGAIN_GAPS[2]);
+  it('repeats a missed word twice at short gaps, then once more at the end of the day', () => {
+    expect(repeatGap(run(['again']), low)).toBe(SHORT_GAPS[0][0]);
+    expect(repeatGap(run(['again']), high)).toBe(SHORT_GAPS[0][1]);
+    expect(repeatGap(run(['again', 'again']), low)).toBe(SHORT_GAPS[1][0]);
+    expect(repeatGap(run(['again', 'hard']), high)).toBe(SHORT_GAPS[1][1]);
+    expect(repeatGap(run(['again', 'again', 'again']))).toBe('end');
     expect(repeatGap(run(['again', 'good']))).toBeNull();
+    expect(repeatGap(run(['again', 'again', 'good']))).toBeNull();
   });
-  it('rests a word for the day after too many misses', () => {
-    const s = run(Array(MAX_AGAIN).fill('again'));
+  it('rests a word for the day once its tries are used up', () => {
+    const s = run(Array(MAX_TRIES).fill('again'));
     expect(repeatGap(s)).toBeNull();
     expect(restingToday(s)).toBe(true);
+    expect(restingToday(run(['again', 'good']))).toBe(false);
   });
-  it('gives a half-known new or relearned word one more pass, but not an ordinary review', () => {
-    expect(repeatGap(run(['hard']))).toBe(HARD_GAP);
-    expect(repeatGap(run(['hard', 'hard']))).toBeNull();
-    expect(repeatGap(run(['again', 'hard']))).toBe(HARD_GAP);
+  it('treats 看了才想起 on a new or missed word as not there yet, but not on an ordinary review', () => {
+    expect(repeatGap(run(['hard']), low)).toBe(SHORT_GAPS[0][0]);
     expect(repeatGap(run(['hard'], false))).toBeNull();
     expect(repeatGap(run(['good']))).toBeNull();
   });
