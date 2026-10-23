@@ -4,7 +4,7 @@ import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel, rootSpan } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
-import { canSpeak, speak } from '../lib/speech';
+import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import { buildSynonymIndex } from '../lib/synonyms';
 import type { Rating, Word } from '../lib/types';
@@ -88,15 +88,15 @@ export function StudyScreen() {
   };
 
   // Read each new card aloud as it appears, if the learner wants that.
-  const autoSpeak = settings.autoSpeak && canSpeak();
+  const autoSpeak = settings.autoSpeak && canPronounce();
   useEffect(() => {
-    if (autoSpeak && phase === 'front' && word) speak(word.word);
+    if (autoSpeak && phase === 'front' && word) speak(word.word, settings.voiceSource);
   }, [autoSpeak, phase, pos, word?.word]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-      if (word && (e.key === 'p' || e.key === 'P')) speak(word.word);
+      if (word && (e.key === 'p' || e.key === 'P')) speak(word.word, settings.voiceSource);
       else if ((e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') && history.length && phase !== 'back') { e.preventDefault(); void undo(); }
       else if (phase === 'front' && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); flip(); }
       else if (phase === 'back' && ['1', '2', '3'].includes(e.key)) submit((['again', 'hard', 'good'] as Rating[])[Number(e.key) - 1]);
@@ -123,7 +123,7 @@ export function StudyScreen() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
           </button>
         )}
-        {canSpeak() && (
+        {canPronounce() && (
           <button type="button" className={`toggle small${settings.autoSpeak ? ' on' : ''}`} aria-pressed={settings.autoSpeak} onClick={() => setSettings({ autoSpeak: !settings.autoSpeak })}>
             自動發音
           </button>
@@ -158,12 +158,13 @@ function DistrictChip({ word }: { word: Word }) {
 }
 
 function Pronunciation({ word, align = 'center' }: { word: Word; align?: 'center' | 'start' }) {
-  if (!word.kk && !canSpeak()) return null;
+  const { settings } = useStore();
+  if (!word.kk && !canPronounce()) return null;
   return (
     <span className={`pron ${align}`}>
       {word.kk && <span className="kk">[{word.kk}]</span>}
-      {canSpeak() && (
-        <button type="button" className="icon-btn speak" aria-label={`唸出 ${word.word}`} title="發音（P）" onClick={() => speak(word.word)}>
+      {canPronounce() && (
+        <button type="button" className="icon-btn speak" aria-label={`唸出 ${word.word}`} title="發音（P）" onClick={() => speak(word.word, settings.voiceSource)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M11 5 6 9H3v6h3l5 4V5z" />
             <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
@@ -203,7 +204,7 @@ function Highlighted({ word }: { word: Word }) {
   );
 }
 
-const RATE_LABEL: Record<Rating, string> = { again: '忘了', hard: '看了才想起', good: '想出來了' };
+const RATE_LABEL: Record<Rating, string> = { again: '不會', hard: '看了才想起', good: '想出來了' };
 
 function rateHint(word: Word, rating: Rating): string {
   const r = applyRating(word.srs, rating, Date.now());

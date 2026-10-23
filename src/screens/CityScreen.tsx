@@ -158,7 +158,7 @@ export function CityScreen({ queueSize, newToday, reviewsDone }: { queueSize: nu
             <div className="stack-4 small">
               <span>{LEVEL_NAMES[selected.srs.level]}（{selected.srs.level} 級）· {DISTRICT_BY_ID[selected.district].name}區</span>
               <span className="muted">
-                {decayOf(selected.srs, now) === 'none' ? `下次施工：${daysLabel(daysBetween(now, selected.srs.due))}` : `逾期 ${daysBetween(selected.srs.due, now)} 天，待修復`} · 忘記 {selected.srs.lapses} 次
+                {decayOf(selected.srs, now) === 'none' ? `下次施工：${daysLabel(daysBetween(now, selected.srs.due))}` : `逾期 ${daysBetween(selected.srs.due, now)} 天，待修復`} · 不會 {selected.srs.lapses} 次
               </span>
             </div>
             <button type="button" className="btn-ghost" onClick={() => setWordId(null)}>關閉</button>

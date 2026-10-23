@@ -5,6 +5,7 @@ import { LEVEL_NAMES } from '../lib/levels';
 import { decayOf } from '../lib/srs';
 import { useStore } from '../lib/store';
 import { addDays, dayKey, streakDays } from '../lib/time';
+import type { VoiceSource } from '../lib/speech';
 import { DAILY_MAX, DAILY_MIN } from '../lib/types';
 
 export function StatsScreen() {
@@ -86,7 +87,7 @@ export function StatsScreen() {
           <h2 className="h2">各街區</h2>
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>街區</th><th>棟數</th><th>平均等級</th><th>忘記次數</th></tr></thead>
+              <thead><tr><th>街區</th><th>棟數</th><th>平均等級</th><th>不會次數</th></tr></thead>
               <tbody>
                 {s.perDistrict.map(({ d, count, avg, lapses }) => (
                   <tr key={d.id}>
@@ -103,11 +104,11 @@ export function StatsScreen() {
         <section className="card stack">
           <h2 className="h2">最常拆的字</h2>
           {s.hardest.length === 0 ? (
-            <p className="muted small">還沒有忘記過的字。</p>
+            <p className="muted small">還沒有答不會的字。</p>
           ) : (
             <ol className="hard-list">
               {s.hardest.map((w) => (
-                <li key={w.id}><b className="latin">{w.word}</b> <span className="muted small">{w.zh}</span><span className="small warn-text">忘 {w.srs!.lapses} 次</span></li>
+                <li key={w.id}><b className="latin">{w.word}</b> <span className="muted small">{w.zh}</span><span className="small warn-text">不會 {w.srs!.lapses} 次</span></li>
               ))}
             </ol>
           )}
@@ -119,6 +120,14 @@ export function StatsScreen() {
             </label>
             <button type="button" className="btn-primary" onClick={save}>儲存</button>
           </div>
+          <label className="field">
+            <span className="small muted">發音來源</span>
+            <select value={settings.voiceSource} onChange={(e) => setSettings({ voiceSource: e.target.value as VoiceSource })}>
+              <option value="auto">自動（iPhone 用線上錄音，其他用裝置語音）</option>
+              <option value="device">裝置語音（離線可用）</option>
+              <option value="online">線上真人錄音（不受靜音開關影響）</option>
+            </select>
+          </label>
           <label className="check">
             <input type="checkbox" checked={settings.pauseNewOnBacklog} onChange={(e) => setSettings({ pauseNewOnBacklog: e.target.checked })} />
             <span className="small">複習積太多時暫停新字（先把舊的蓋回來）</span>

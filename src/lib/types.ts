@@ -50,6 +50,8 @@ export interface Settings {
   onboarded: boolean;
   /** Read the word aloud when a card appears. */
   autoSpeak: boolean;
+  /** Where pronunciation comes from: chosen per device ('auto'), the device voice, or online recordings. */
+  voiceSource: VoiceSource;
   /** Which new words come first: the built-in mix of districts, one chosen district, or a daily shuffle. */
   studyOrder: StudyOrder;
   focusDistrict: DistrictId;
@@ -62,6 +64,8 @@ export interface Settings {
 
 export const DAILY_MIN = 1;
 export const DAILY_MAX = 500;
+import type { VoiceSource } from './speech';
+
 export type StudyOrder = 'mixed' | 'district' | 'random';
 
-export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed', focusDistrict: 'speech', pauseNewOnBacklog: true, examDate: '' };
+export const DEFAULT_SETTINGS: Settings = { dailyNew: 20, onboarded: false, autoSpeak: true, studyOrder: 'mixed', focusDistrict: 'speech', voiceSource: 'auto', pauseNewOnBacklog: true, examDate: '' };

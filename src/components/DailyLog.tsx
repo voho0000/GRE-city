@@ -113,22 +113,22 @@ export function DailyLog() {
           </div>
 
           <div className="stack-6">
-            <div className="split-bar" role="img" aria-label={`記得 ${pct(summary.ratings.good)}%，模糊 ${pct(summary.ratings.hard)}%，忘了 ${pct(summary.ratings.again)}%`}>
+            <div className="split-bar" role="img" aria-label={`想出來了 ${pct(summary.ratings.good)}%，看了才想起 ${pct(summary.ratings.hard)}%，不會 ${pct(summary.ratings.again)}%`}>
               <span style={{ flexGrow: summary.ratings.good, background: '#1F3A5F' }} />
               <span style={{ flexGrow: summary.ratings.hard, background: '#9FB3C8' }} />
               <span style={{ flexGrow: summary.ratings.again, background: '#D9822B' }} />
             </div>
             <div className="legend small muted">
-              <span><i style={{ background: '#1F3A5F' }} />記得 {summary.ratings.good}（{pct(summary.ratings.good)}%）</span>
-              <span><i style={{ background: '#9FB3C8' }} />模糊 {summary.ratings.hard}</span>
-              <span><i style={{ background: '#D9822B' }} />忘了 {summary.ratings.again}</span>
+              <span><i style={{ background: '#1F3A5F' }} />想出來了 {summary.ratings.good}（{pct(summary.ratings.good)}%）</span>
+              <span><i style={{ background: '#9FB3C8' }} />看了才想起 {summary.ratings.hard}</span>
+              <span><i style={{ background: '#D9822B' }} />不會 {summary.ratings.again}</span>
             </div>
           </div>
 
           <WordGroup title="新蓋的建築" ids={summary.built} byId={byId} render={(w) => <span className="small muted">{DISTRICT_BY_ID[w.district].name}</span>} />
           <ChangeGroup title="升級" changes={summary.raised} byId={byId} />
           <ChangeGroup title="拆回地基" changes={summary.torn} byId={byId} warn />
-          <WordGroup title="忘記的字" ids={summary.forgotten} byId={byId} warn render={(w) => <span className="small muted">{w.srs ? LEVEL_NAMES[w.srs.level] : ''}</span>} />
+          <WordGroup title="不會的字" ids={summary.forgotten} byId={byId} warn render={(w) => <span className="small muted">{w.srs ? LEVEL_NAMES[w.srs.level] : ''}</span>} />
         </>
       )}
     </section>
