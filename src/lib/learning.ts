@@ -10,6 +10,8 @@ import type { LogEntry, Rating } from './types';
 export const SHORT_GAPS: [number, number][] = [[1, 2], [2, 3]];
 /** Answers in one day after which a word that still is not recalled rests until tomorrow. */
 export const MAX_TRIES = SHORT_GAPS.length + 2;
+/** Gap for a word the learner chose to keep practising past the rest point. */
+export const KEEP_GAP: [number, number] = [2, 3];
 /** New words wait while this many words are still being relearned today. */
 export const LEARNING_LIMIT = 6;
 
@@ -34,15 +36,16 @@ const notYet = (s: DayState) => s.last === 'again' || (s.last === 'hard' && (s.n
  * When the word should come back today: a number of cards later, 'end' for the back of today's list, or null
  * when it is done for the day (recalled, or rested after too many tries).
  */
-export function repeatGap(s: DayState | undefined, rand: () => number = Math.random): number | 'end' | null {
+export function repeatGap(s: DayState | undefined, rand: () => number = Math.random, keepGoing = false): number | 'end' | null {
   if (!s || !notYet(s)) return null;
-  const short = SHORT_GAPS[s.tries - 1];
+  // The learner chose to keep at it: no resting, it keeps coming back a couple of cards later until recalled.
+  const short = keepGoing && s.tries > SHORT_GAPS.length ? KEEP_GAP : SHORT_GAPS[s.tries - 1];
   if (short) return short[0] + Math.floor(rand() * (short[1] - short[0] + 1));
   return s.tries < MAX_TRIES ? 'end' : null;
 }
 
 /** True when the word used up today's tries without being recalled and rests until tomorrow. */
-export const restingToday = (s: DayState | undefined) => !!s && notYet(s) && s.tries >= MAX_TRIES;
+export const restingToday = (s: DayState | undefined, keepGoing = false) => !keepGoing && !!s && notYet(s) && s.tries >= MAX_TRIES;
 
 export function dayStates(logs: LogEntry[], now: number): Map<string, DayState> {
   const start = startOfDay(now);
@@ -52,8 +55,25 @@ export function dayStates(logs: LogEntry[], now: number): Map<string, DayState> 
 }
 
 /** Words still being relearned today, in the order they were last answered. */
-export function learningIds(states: Map<string, DayState>): string[] {
-  return [...states].filter(([, s]) => repeatGap(s) !== null).map(([id]) => id);
+export function learningIds(states: Map<string, DayState>, keep: Set<string> = new Set()): string[] {
+  return [...states].filter(([id, s]) => repeatGap(s, Math.random, keep.has(id)) !== null).map(([id]) => id);
+}
+
+/** Words the learner chose to keep practising today, remembered on this device until the day ends. */
+const keepKey = (now: number) => `gre-city:keep:${new Date(now).toDateString()}`;
+export function loadKeep(now: number): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(keepKey(now)) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+export function saveKeep(now: number, ids: Set<string>) {
+  try {
+    localStorage.setItem(keepKey(now), JSON.stringify([...ids]));
+  } catch {
+    // Private mode or storage blocked: the choice simply lasts for this visit.
+  }
 }
 
 /**

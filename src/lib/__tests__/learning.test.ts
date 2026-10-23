@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LEARNING_LIMIT, MAX_TRIES, SHORT_GAPS, dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../learning';
+import { KEEP_GAP, LEARNING_LIMIT, MAX_TRIES, SHORT_GAPS, dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../learning';
 import type { Rating } from '../types';
 
 const run = (ratings: Rating[], isNew = true) => ratings.reduce((s, r) => step(s, r, isNew), undefined as ReturnType<typeof step> | undefined);
@@ -21,6 +21,12 @@ describe('repeatGap', () => {
     expect(repeatGap(s)).toBeNull();
     expect(restingToday(s)).toBe(true);
     expect(restingToday(run(['again', 'good']))).toBe(false);
+  });
+  it('keeps a word coming back past the rest point when the learner chooses to', () => {
+    const s = run(Array(MAX_TRIES + 3).fill('again'));
+    expect(restingToday(s, true)).toBe(false);
+    expect(repeatGap(s, low, true)).toBe(KEEP_GAP[0]);
+    expect(repeatGap(run(['again', 'again', 'again', 'again', 'good']), low, true)).toBeNull();
   });
   it('treats 看了才想起 on a new or missed word as not there yet, but not on an ordinary review', () => {
     expect(repeatGap(run(['hard']), low)).toBe(SHORT_GAPS[0][0]);

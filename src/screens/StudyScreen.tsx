@@ -5,7 +5,7 @@ import { DISTRICT_BY_ID } from '../data/districts';
 import { buildingParts, iso, pts } from '../lib/city';
 import { LEVEL_NAMES, daysLabel } from '../lib/levels';
 import { applyRating, buildQueue, decayOf, orderNewWords, type RatingResult } from '../lib/srs';
-import { dayStates, gateNew, learningIds, repeatGap, restingToday, step, weaveIn } from '../lib/learning';
+import { KEEP_GAP, dayStates, gateNew, learningIds, loadKeep, repeatGap, restingToday, saveKeep, step, weaveIn } from '../lib/learning';
 import { canPronounce, speak } from '../lib/speech';
 import { useStore } from '../lib/store';
 import { findInSentence } from '../lib/example';
@@ -21,7 +21,7 @@ export function StudyScreen() {
   const { words, byId, logs, settings, setSettings, rate, undoLastRating, syncNow } = useStore();
   const [queue, setQueue] = useState<string[]>(() => {
     // Words still being relearned from earlier today come back first, a few cards apart.
-    const learning = learningIds(dayStates(logs, Date.now()));
+    const learning = learningIds(dayStates(logs, Date.now()), loadKeep(Date.now()));
     const q = weaveIn(buildQueue(words, Date.now(), settings.dailyNew, settings), learning);
     return gateNew(q, 0, new Set(learning), (id) => !byId.get(id)?.srs);
   });
@@ -34,6 +34,7 @@ export function StudyScreen() {
   const [history, setHistory] = useState<{ pos: number; queue: string[]; session: typeof session }[]>([]);
   const synonyms = useMemo(() => buildSynonymIndex(words), [words]);
   const today = useMemo(() => dayStates(logs, Date.now()), [logs]);
+  const [keep, setKeep] = useState<Set<string>>(() => loadKeep(Date.now()));
 
   const id = queue[pos];
   const word = id ? byId.get(id) : undefined;
@@ -50,7 +51,7 @@ export function StudyScreen() {
     setHistory((h) => [...h.slice(-19), { pos, queue, session }]);
     const r = await rate(word.id, rating);
     const state = step(today.get(word.id), rating, r.isNew);
-    const gap = repeatGap(state);
+    const gap = repeatGap(state, Math.random, keep.has(word.id));
     const requeued = gap !== null;
     const later = gap === 'end';
     if (gap !== null) {
@@ -65,13 +66,13 @@ export function StudyScreen() {
       raised: s.raised + (!r.isNew && r.levelAfter > r.levelBefore ? 1 : 0),
       again: s.again + (rating === 'again' ? 1 : 0),
     }));
-    setResult({ rating, r, requeued, later, resting: restingToday(state) });
+    setResult({ rating, r, requeued, later, resting: restingToday(state, keep.has(word.id)) });
     setPhase('done');
     setBusy(false);
   };
 
   const next = () => {
-    setQueue((q) => gateNew(q, pos + 1, new Set(learningIds(today)), (id) => !byId.get(id)?.srs));
+    setQueue((q) => gateNew(q, pos + 1, new Set(learningIds(today, keep)), (id) => !byId.get(id)?.srs));
     setPos((p) => p + 1);
     setPhase('front');
     setResult(null);
@@ -93,6 +94,21 @@ export function StudyScreen() {
     setBusy(false);
   };
   const flip = () => setPhase('back');
+
+  /** On the rest screen: the learner wants this word to keep coming back today until it sticks. */
+  const keepPractising = () => {
+    if (!word) return;
+    const ids = new Set(keep).add(word.id);
+    setKeep(ids);
+    saveKeep(Date.now(), ids);
+    const gap = KEEP_GAP[0] + Math.floor(Math.random() * (KEEP_GAP[1] - KEEP_GAP[0] + 1));
+    setQueue((q) => {
+      const next = [...q];
+      next.splice(Math.min(pos + 1 + gap, next.length), 0, word.id);
+      return next;
+    });
+    next();
+  };
 
   const addExtra = () => {
     const inQueue = new Set(queue);
@@ -171,7 +187,7 @@ export function StudyScreen() {
         ) : phase === 'back' ? (
           <Back word={word} words={words} synonyms={synonyms.get(word.id) ?? []} byId={byId} busy={busy} onRate={submit} />
         ) : (
-          result && <Done word={word} result={result} onNext={next} onUndo={undo} />
+          result && <Done word={word} result={result} onNext={next} onUndo={undo} onKeep={keepPractising} />
         )
       ) : null}
     </main>
@@ -355,7 +371,7 @@ function Back({ word, words, synonyms, byId, busy, onRate }: { word: Word; words
 function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean, later: boolean, resting: boolean) {
   const d = DISTRICT_BY_ID[word.district];
   const next = later ? '今天最後' : requeued ? '等一下' : daysLabel(r.days);
-  if (resting) return { title: '今天先休息', sub: `${word.word} 今天試了好幾次，再硬背效果有限，明天換個腦袋再來`, next };
+  if (resting) return { title: '今天先休息？', sub: `${word.word} 今天試了好幾次。一般來說隔天再背效果更好，但也可以繼續練到會為止`, next };
   if (later) return { title: '先放一邊', sub: '隔一段時間，今天最後再考一次', next };
   if (r.isNew) {
     if (rating === 'good') return { title: '蓋好小屋！', sub: `${word.word} 落腳${d.name}區`, next };
@@ -369,7 +385,7 @@ function doneCopy(word: Word, rating: Rating, r: RatingResult, requeued: boolean
   return { title: '加蓋一層！', sub: `${word.word} 從${LEVEL_NAMES[r.levelBefore]}蓋到${LEVEL_NAMES[r.levelAfter]}`, next };
 }
 
-function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean; later: boolean; resting: boolean }; onNext: () => void; onUndo: () => void }) {
+function Done({ word, result, onNext, onUndo, onKeep }: { word: Word; result: { rating: Rating; r: RatingResult; requeued: boolean; later: boolean; resting: boolean }; onNext: () => void; onUndo: () => void; onKeep: () => void }) {
   const copy = doneCopy(word, result.rating, result.r, result.requeued, result.later, result.resting);
   const d = DISTRICT_BY_ID[word.district];
   return (
@@ -383,10 +399,20 @@ function Done({ word, result, onNext, onUndo }: { word: Word; result: { rating: 
           <div className="tile left"><span className="small muted">{d.name}區</span><b>{LEVEL_NAMES[result.r.levelAfter]}</b></div>
         </div>
       </div>
-      <div className="row gap-12">
-        <button type="button" className="btn-ghost big" onClick={onUndo}>按錯了，重評</button>
-        <button type="button" className="btn-primary big grow" onClick={onNext} autoFocus>下一個字</button>
-      </div>
+      {result.resting ? (
+        <div className="stack-8">
+          <div className="row gap-12">
+            <button type="button" className="btn-ghost big grow" onClick={onKeep}>繼續練到會</button>
+            <button type="button" className="btn-primary big grow" onClick={onNext} autoFocus>先休息，下一個字</button>
+          </div>
+          <button type="button" className="btn-text small" onClick={onUndo}>按錯了，重評</button>
+        </div>
+      ) : (
+        <div className="row gap-12">
+          <button type="button" className="btn-ghost big" onClick={onUndo}>按錯了，重評</button>
+          <button type="button" className="btn-primary big grow" onClick={onNext} autoFocus>下一個字</button>
+        </div>
+      )}
     </div>
   );
 }
