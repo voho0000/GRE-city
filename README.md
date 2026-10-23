@@ -2,6 +2,10 @@
 
 線上版：https://voho0000.github.io/GRE-city/
 
+![城市首頁：九個街區，每一棟建築是一個單字](docs/images/city.png)
+
+> 每個人的城市只存在自己的瀏覽器裡（IndexedDB），沒有共用的伺服器。別人打開網址，看到的是一座空城，他背的字只會蓋在他自己的城市，碰不到你的。
+
 背一個 GRE 單字，城市就多一棟建築。複習答對，建築就升級成下一種；太久沒複習，建築會褪色、長草。
 
 ## 怎麼玩
@@ -11,7 +15,15 @@
 - **字庫**：貼上 CSV 或從試算表複製匯入（欄位 `word, zh, pos, example, district`）。沒填街區的字會依字根和中文意思自動分區，之後也能手動改。這裡也可以下載和還原備份。
 - **統計**：各類建築數量、近 14 天紀錄、各街區狀況、最常忘的字，以及每日新字數設定（預設 50）。
 
+<p>
+  <img src="docs/images/study-front.png" width="260" alt="複習：看字想意思">
+  <img src="docs/images/study-back.png" width="260" alt="翻面後自評">
+  <img src="docs/images/study-done.png" width="260" alt="答對後建築升級">
+</p>
+
 ## 建築與複習間隔
+
+![六種建築與荒廢狀態](docs/images/building-types.png)
 
 | 等級 | 建築 | 下次複習 |
 | --- | --- | --- |
@@ -27,6 +39,11 @@
 - 忘了：拆回地基，同一輪稍後會再出現一次。
 - 過了複習日：建築褪色。
 - 逾期超過一個間隔：建築長草，必須先答對一次「修復」才能再升級。
+
+<p>
+  <img src="docs/images/district.png" width="49%" alt="放大到單一街區">
+  <img src="docs/images/stats.png" width="49%" alt="統計">
+</p>
 
 ## 開發
 
